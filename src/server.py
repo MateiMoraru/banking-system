@@ -34,18 +34,18 @@ class Server:
             except Exception as e:
                 print(e)
                 print("Client Disconnected")
+                self.shutdown(conn)
     
 
     def handle_conn(self, conn: socket.socket):
-        user_name = "None"
-        user_rights = "None"
+        name = "None"
         signup = self.recv(conn)
         
         if signup == 'yes':
             self.signup(conn)
-            user_name, user_rights = self.login(conn)
+            name = self.login(conn)
         else:
-            user_name, user_rights = self.login(conn)
+            name = self.login(conn)
 
         conns = ""
         for i in range(0, len(self.connections)):
@@ -54,23 +54,27 @@ class Server:
         self.send(conn, conns)
 
         try:
-            self.loop(conn)
+            self.loop(conn, name)
         except Exception as e:
-            print("e")
+            print(e)
             self.shutdown()
 
 
-    def loop(self, conn):
+    def loop(self, conn:socket.socket, name:str):
         while True:
             command = self.recv(conn).split(' ')
-            if command == ["shutdown"]:
+            if command[0] == "shutdown":
                 self.shutdown()
+            elif command[0] == "balance":
+                balance = self.database.get_balance(name)
+                print(balance)
+                self.send(conn, str(balance))
             print(command)
 
 
     def signup(self, conn: socket.socket):
         credentials = self.recv(conn)
-        username = credentials.split(' ')[0]
+        name = credentials.split(' ')[0]
         password = credentials.split(' ')[1]
         if len(password) < 1:
             print("No Password Provided")
@@ -78,44 +82,32 @@ class Server:
             self.signup(conn)
 
         
-        if self.database.search_name(username):
+        if self.database.search_name(name):
             self.send(conn, "Account Already Exists-w")
             self.signup(conn)
         else:
-            self.database.add_user(username, password, "user")
+            self.database.add_user(name, password, "user")
             self.send(conn, "Account Created Successfully-w")
 
 
     def login(self, conn: socket.socket, count: int = 0):
         print("Login")
         credentials = self.recv(conn)
-        username = credentials.split(' ')[0]
+        name = credentials.split(' ')[0]
         password = credentials.split(' ')[1]
         if len(password) < 1:
             print("No Password Provided")
             self.send(conn, "No Password Provided")
             self.login(conn)
         
-        resp = self.database.search_name_pwd(username, password)
+        resp = self.database.search_name_pwd(name, password)
 
         if count <= 2 and resp is None:
             self.send(conn, "Wrong Credentials-w")
             return
-        if self.database.search_name(username) and self.database.is_empty(username):
-            self.database.set_password(username, password)
-            self.send(conn, f"Welcome {username}, Your Account Has Successfully Been Created-w")
-            time.sleep(.1)
-            self.send(conn, "Logged In Successfully")
-            user_rights = self.database.is_admin(username)
-            time.sleep(.1)
-            self.send(conn, user_rights)
-            return (username, user_rights)
         if resp:
             self.send(conn, "Logged In Successfully-w")
-            user_rights = self.database.is_admin(username)
-            time.sleep(.1)
-            self.send(conn, str(user_rights))
-            return (username, user_rights)
+            return
         
         self.send(conn, "Account Not Recognised-w")
         return False

@@ -37,14 +37,15 @@ class Client:
         
         while True:
             data = input(">")
+            self.send(data)
 
             print(data)
 
     
     def signup(self):
-        username = input("Username: ")
+        name = input("Name: ")
         password = getpass.getpass(prompt="Password: ")
-        credentials = username + ' ' + password
+        credentials = name + ' ' + password
 
         self.send(credentials)
 
@@ -64,9 +65,9 @@ class Client:
 
         
     def login(self):
-        username = input("Username: ")
+        name = input("Name: ")
         password = getpass.getpass(prompt="Password: ")
-        credentials = username + ' ' + password
+        credentials = name + ' ' + password
         print()
 
         self.send(credentials)
@@ -79,7 +80,7 @@ class Client:
             self.process_recv(confirmation)
         elif "Logged In Successfully" in confirmation:
             self.user_rights = self.recv()
-            self.user_name = username
+            self.user_name = name
             print(f"Logged In Successfully, With {self.user_rights} Rights.\n")
         elif confirmation == "Wrong Credentials":
             print("The Credentials You Entered Weren't Found In Our Database.\n Try Again.\n")
