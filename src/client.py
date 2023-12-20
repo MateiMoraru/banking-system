@@ -43,6 +43,7 @@ class Client:
         
         while True:
             data = input(">")
+            print()
             self.send(data)
 
             resp = self.recv()
@@ -100,7 +101,7 @@ class Client:
 
 
     def shutdown(self):
-        print("Shuttind down client.")
+        print("Shutting down client.")
         self.socket.close()
         sys.exit(0)
 

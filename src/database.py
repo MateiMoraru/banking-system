@@ -28,10 +28,47 @@ class Mongo:
             }
         self.users.insert_one(data)
 
+
+    def add_credit(self, name:str, value:int):
+        find = self.users.find_one_and_update({"name": name}, {"$inc":{"credit": value}})
+
+
+    def get_user_raw(self, name:str):
+        find = self.users.find_one({"name": name})
+        return find
+
     
     def get_user(self, name:str):
-        find = self.users.find_one({"name": name})
+        find = self.get_user_raw(name)
         return parse_json(find)
+    
+
+    def get_balance(self, name:str):
+        find = self.users.find_one({"name": name})
+        if find:
+            return int(find["balance"])
+        return None
+    
+
+    def get_debt(self, name:str):
+        find = self.users.find_one({"name": name})
+        if find:
+            return int(find["debt"])
+        return None
+    
+
+    def get_debt(self, name:str):
+        find = self.users.find_one({"name": name})
+        if find:
+            return int(find["debt"])
+        return None
+    
+
+    def get_credit(self, name:str):
+        find = self.users.find_one({"name": name})
+        if find:
+            return int(find["credit"])
+        return None
     
 
     def search_name(self, name:str):
@@ -43,14 +80,7 @@ class Mongo:
     def search_name_pwd(self, name:str, pwd:str):
         find = self.users.find_one({'name': name, 'password': pwd})
         return find != None
-    
 
-    def get_balance(self, name:str):
-        find = self.users.find_one({"name": name})
-        if find:
-            return str(find["balance"])
-        return None
-    
 
     def deposit(self, name:str, value:int):
         find = self.users.find_one_and_update({"name": name}, {"$inc":{"balance": value}})
@@ -61,7 +91,8 @@ class Mongo:
 
     
     def pay_debt(self, name:str, value:int):
-        pass
+        self.add_debt(name, -value)
+
 
     
     def send_to(self, name:str, target:str, value:int):
