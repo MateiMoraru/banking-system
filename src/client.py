@@ -1,5 +1,6 @@
 import socket
 import getpass
+import sys
 
 class Client:
     ENCODING = "UTF-8"
@@ -19,7 +20,7 @@ class Client:
         self.socket.connect(self.server_addr)
         print(f"Connected to host {self.server_addr}")
 
-        signup = input("Do You Want To Create An Account? yes/no\n")
+        signup = input("Do you want to create an account? yes/no\n")
         self.send(signup)
 
         if signup == "yes":
@@ -32,14 +33,27 @@ class Client:
 
 
     def run(self):
-        conns = self.recv()
-        print(conns)
+        resp = self.recv()
+        self.process_recv(resp)
+        resp = self.recv()
+        self.process_recv(resp)
+        if resp == "shutdown":
+            print("Failed to recognise account, try creating one.")
+            self.shutdown()
         
         while True:
             data = input(">")
             self.send(data)
 
-            print(data)
+            resp = self.recv()
+            self.process_recv(resp)
+
+            if "Do you want to add the difference to your debt" in resp:
+                ans = input("")
+                self.send(ans)
+            
+                resp = self.recv()
+                self.process_recv(resp)
 
     
     def signup(self):
@@ -51,17 +65,16 @@ class Client:
 
         confirmation = self.recv()
 
-        if "No Password Provided" in confirmation:
+        if "No password provided" in confirmation:
             print(confirmation)
             self.signup()
-        elif "Account Already Exists" in confirmation:
-            print(f"{confirmation}, Try Again")
+        elif "Account already exists" in confirmation:
+            print(f"{confirmation}, try again")
             self.signup()
-
         else:
             print(confirmation)
 
-        print("Please Login Again\n")
+        print("Please login again\n")
 
         
     def login(self):
@@ -72,22 +85,24 @@ class Client:
 
         self.send(credentials)
         confirmation = self.recv()
-        if "No Password Provided" in confirmation:
+        if "No password provided" in confirmation:
             print(confirmation)
             self.login()
-        elif "Welcome" in confirmation:
-            confirmation = self.recv()
-            self.process_recv(confirmation)
-        elif "Logged In Successfully" in confirmation:
+        elif confirmation == "Wrong credentials":
+            print("The credentials you entered weren't found in our database.\n Try again.\n")
+            self.login()
+        elif "Logged in successfully" in confirmation:
             self.user_rights = self.recv()
             self.user_name = name
-            print(f"Logged In Successfully, With {self.user_rights} Rights.\n")
-        elif confirmation == "Wrong Credentials":
-            print("The Credentials You Entered Weren't Found In Our Database.\n Try Again.\n")
-            self.login()
+            print(f"Logged in successfully, with {self.user_rights} rights.\n")
+        elif confirmation == "Account not recognised":
+            print("\n Your account was not found in our database.\n Try creating one.\n")
 
-        elif confirmation == "Account Not Recognised":
-            print("\n Your Account Was Not Found In Our Database.\n Try Creating One.\n")
+
+    def shutdown(self):
+        print("Shuttind down client.")
+        self.socket.close()
+        sys.exit(0)
 
 
     def send(self, message: str):
@@ -98,6 +113,12 @@ class Client:
             return False
         
         return True
+    
+
+    def process_recv(self, response:str):
+        if '-w' in response:
+            response = response[0:len(response) - 2]
+            print(response)
 
 
     def recv(self):
