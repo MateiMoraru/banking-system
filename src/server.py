@@ -66,135 +66,169 @@ class Server:
             command = self.recv(conn).split(' ')
             if command[0] == "shutdown":
                 self.shutdown()
-            elif command[0] == "get-balance":
-                balance = self.database.get_balance(name)
-                print(f"Your current balance is: {balance}-w")
-                self.send(conn, f"Your current balance is: {balance}-w")
             elif command[0] == "deposit":
-                try:
-                    value = int(command[1])
-                except:
-                    self.send('Wrong arguments for command, expected "deposit <value>"-w')
-                    break
-                self.database.deposit(name, value)
-                balance = self.database.get_balance(name)
-                self.send(conn, f"Your current balance has been increased to {balance}-w")
+                self.handle_deposit(conn, name, command)
             elif command[0] == "withdraw":
-                try:
-                    value = int(command[1])
-                except:
-                    self.send('Wrong arguments for command, expected "withdraw <value>"-w')
-                    break
-                
-                balance = self.database.get_balance(name)
-                if balance < value:
-                    self.send(conn, f"You have insufficient funds\nDo you want to add the difference to your debt? yes/no\n-w")
-                    resp = self.recv()
-                    if resp == 'yes':
-                        self.database.add_debt(name, value - balance)
-                    else:
-                        break
-                self.database.withdraw(name, balance)
-                balance = self.database.get_balance(name)
-                self.send(conn, f"Your current balance has been decreased to {balance}-w")
+                self.handle_withdraw(conn, name, command)
             elif command[0] == "send":
-                try:
-                    account = command[1]
-                    value = int(command[2])
-                except:
-                    self.send('Wrong arguments for command, expected "send <account-name> <value>"-w')
-                    break
-
-                check = self.database.search_name(account)
-                current_balance = self.database.get_balance(name)
-                debt = False
-                if value > current_balance:
-                    self.send(conn, "Transfer failed due to insufficient funds\nDo you want to add the difference to your debt? yes/no\n-w")
-                    resp = self.recv(conn)
-                    if resp == "yes":
-                        self.database.add_debt(name, value - current_balance)
-                        debt = True
-                    else:
-                        break
-                if check:
-                    
-                    if debt:
-                        value = current_balance
-                    self.database.send_to(name, account, value)
-                    self.send(conn, "Transfer finished-w")
-                else:
-                    self.send(conn, f"User {account} doesn't exists-w")
+                self.handle_send(conn, name, command)
             elif command[0] == "pay-debt":
-                debt = self.database.get_debt(name)
-                try:
-                    value = command[1]
-                    if value == '*' or value == 'all':
-                        value = debt
-                    else:
-                        value = int(value)
-                except:
-                    self.send(conn, 'Wrong arguments for command, expected "pay-debt <value>"-w')
-                    break
-                
-                balance = self.database.get_balance(name)
-                if debt <= 0:
-                    self.send(conn, "You don't have any debts-w")
-                if balance < value:
-                    self.send(conn, "You have insufficient funds. Try depositing first-w")
-                    break
-                elif value > debt:
-                    value = debt
-                    self.send(conn, f"The amount specified is greater than you total debt, changed the amount to {debt}-w")
-                    
-                self.database.pay_debt(name, value)
-                self.database.add_credit(name, value // 100)
-                self.send(conn, f"Your current debt is: {self.database.get_debt(name)}-w")
+                self.handle_pay_debt(conn, name)
             elif command[0] == "loan":
-                try:
-                    value = int(command[1])
-                    months = int(command[2])
-                except:
-                    self.send(conn, 'Wrong arguments for command, expected "loan <value> <months>"')
-                
-                credit = self.database.get_credit(name)
-                required_credit = months * 50 * value / 10000
-                if credit > required_credit:
-                    self.database.add_debt(name, value)
-                    self.database.deposit(name, value)
-                    self.send(conn, f"Loan accepted. You have {months} to pay it back")
-                else:
-                    self.send(conn, f"Load not accepted due to insuficient credit. Required credit: {required_credit}")
+                self.handle_loan(conn, name, command)
+            elif command[0] == "get-balance":
+                self.handle_get_balance(conn, name)
             elif command[0] == "get-debt":
-                debt = self.database.get_debt(name)
-                self.send(conn, f"Your current debt is: {debt}-w")
+                self.handle_get_debt(conn, name)
             elif command[0] == "get-data":
-                data = self.database.get_user(name)
-                print(data)
-                self.send(conn, f"Current cursor object: \n {data}-w")
+                self.get_handle_data(conn, name)
             elif command[0] == "get-data-pretty":
-                data = ""
-                user = self.database.get_user_raw(name)
-                data += f"Name: {user["name"]}\n"
-                data += f"Balance: {user["balance"]}\n"
-                data += f"Debt: {user["debt"]}\n"
-                data += f"Credit: {user["credit"]}\n"
-                self.send(conn, data + "-w")
+                self.get_handle_data_pretty(conn, name)
             elif command[0] == "help":
-                commands = ""
-                commands += "deposit <value> -> deposits the value specified in your account\n"
-                commands += "withdraw <value> -> withdraws the value specified from you account\n"
-                commands += "pay-debt <value> -> removes the value specified from your account's debt\n"
-                commands += "send <name> <value> -> sends the value specified to the account specified\n"
-                commands += "loan <value> <months> -> loans you money if you have enough credit\n"
-                commands += "get-balance -> returns your balance\n"
-                commands += "get-data -> returns your account's data\n"
-                commands += "get-data-pretty -> returns your data in a more readable manner\n"
-                commands += "shutdown -> shuts down server\n-w"
-                self.send(conn, commands)
+                self.help(conn)
             else:
                 self.send(conn, 'Unknown command, try running "-h"-w')
             
             print(f"User {name} sent command: {command}")
+
+
+    def handle_deposit(self, conn:socket.socket, name:str, command:List[int]):
+        try:
+            value = int(command[1])
+        except:
+            self.send('Wrong arguments for command, expected "deposit <value>"-w')
+            return
+        self.database.deposit(name, value)
+        balance = self.database.get_balance(name)
+        self.send(conn, f"Your current balance has been increased to {balance}-w")
+
+
+    def handle_withdraw(self, conn:socket.socket, name:str, command:List[int]):
+        try:
+            value = int(command[1])
+        except:
+            self.send('Wrong arguments for command, expected "withdraw <value>"-w')
+            return
+                
+        balance = self.database.get_balance(name)
+        if balance < value:
+            self.send(conn, f"You have insufficient funds\nDo you want to add the difference to your debt? yes/no\n-w")
+            resp = self.recv()
+            if resp == 'yes':
+                self.database.add_debt(name, value - balance)
+            else:
+                return
+        self.database.withdraw(name, balance)
+        balance = self.database.get_balance(name)
+        self.send(conn, f"Your current balance has been decreased to {balance}-w")
+
+
+    def handle_send(self, conn:socket.socket, name:str, command:List[str, int]):
+        try:
+            account = command[1]
+            value = int(command[2])
+        except:
+            self.send('Wrong arguments for command, expected "send <account-name> <value>"-w')
+            return
+
+        check = self.database.search_name(account)
+        current_balance = self.database.get_balance(name)
+        debt = False
+        if value > current_balance:
+            self.send(conn, "Transfer failed due to insufficient funds\nDo you want to add the difference to your debt? yes/no\n-w")
+            resp = self.recv(conn)
+            if resp == "yes":
+                self.database.add_debt(name, value - current_balance)
+                debt = True
+            else:
+                return
+        if check:
+            
+            if debt:
+                value = current_balance
+            self.database.send_to(name, account, value)
+            self.send(conn, "Transfer finished-w")
+        else:
+            self.send(conn, f"User {account} doesn't exists-w")
+
+
+    def handle_pay_debt(self, conn:socket.socket, name:str, command:List[int]):
+        debt = self.database.get_debt(name)
+        try:
+            value = command[1]
+            if value == '*' or value == 'all':
+                value = debt
+            else:
+                value = int(value)
+        except:
+            self.send(conn, 'Wrong arguments for command, expected "pay-debt <value>"-w')
+            return
+                
+        balance = self.database.get_balance(name)
+        if debt <= 0:
+            self.send(conn, "You don't have any debts-w")
+        if balance < value:
+            self.send(conn, "You have insufficient funds. Try depositing first-w")
+            return
+        elif value > debt:
+            value = debt
+            self.send(conn, f"The amount specified is greater than you total debt, changed the amount to {debt}-w")
+                    
+        self.database.pay_debt(name, value)
+        self.database.add_credit(name, value // 100)
+        self.send(conn, f"Your current debt is: {self.database.get_debt(name)}-w")
+    
+
+    def handle_loan(self, conn:socket.socket, name:str, command:List[int, str]):
+        try:
+            value = int(command[1])
+            months = int(command[2])
+        except:
+            self.send(conn, 'Wrong arguments for command, expected "loan <value> <months>"')
+                
+        credit = self.database.get_credit(name)
+        required_credit = months * 50 * value / 10000
+        if credit > required_credit:
+            self.database.add_debt(name, value)
+            self.database.deposit(name, value)
+            self.send(conn, f"Loan accepted. You have {months} to pay it back")
+        else:
+            self.send(conn, f"Load not accepted due to insuficient credit. Required credit: {required_credit}")
+
+
+    def handle_get_debt(self, conn:socket.socket, name:str):
+        debt = self.database.get_debt(name)
+        self.send(conn, f"Your current debt is: {debt}-w")
+
+
+    def handle_get_data(self, conn:socket.socket, name:str):
+        data = self.database.get_user(name)
+        print(data)
+        self.send(conn, f"Current cursor object: \n {data}-w")
+
+
+    def handle_get_data_pretty(self, conn:socket.socket, name:str):
+        data = ""
+        user = self.database.get_user_raw(name)
+        data += f"Name: {user["name"]}\n"
+        data += f"Balance: {user["balance"]}\n"
+        data += f"Debt: {user["debt"]}\n"
+        data += f"Credit: {user["credit"]}\n"
+        self.send(conn, data + "-w")
+
+
+    def help(self, conn:socket.socket):
+        commands = ""
+        commands += "deposit <value> -> deposits the value specified in your account\n"
+        commands += "withdraw <value> -> withdraws the value specified from you account\n"
+        commands += "pay-debt <value> -> removes the value specified from your account's debt\n"
+        commands += "send <name> <value> -> sends the value specified to the account specified\n"
+        commands += "loan <value> <months> -> loans you money if you have enough credit\n"
+        commands += "get-balance -> returns your balance\n"
+        commands += "get-data -> returns your account's data\n"
+        commands += "get-data-pretty -> returns your data in a more readable manner\n"
+        commands += "shutdown -> shuts down server\n-w"
+        self.send(conn, commands)
 
 
     def signup(self, conn: socket.socket):
