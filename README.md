@@ -20,4 +20,4 @@ After the installation is over, you can go ahead and run *server.py* (either by 
 ![example 1](assets/example_1.png)
 
 ## Help
-Feel free to ask any questions, either on *github* or on my [email](mailto:moraru.matei24@gmail.com).
+Feel free to ask any questions, either on *github* or on my [moraru.matei24@gmail.com](mailto:moraru.matei24@gmail.com).
