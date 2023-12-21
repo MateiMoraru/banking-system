@@ -29,8 +29,6 @@ class Server:
             try:    
                 client = threading.Thread(target=self.handle_conn, args=[conn])
                 client.start()
-                for connection in self.connections:
-                    self.send(connection, "New connection established.")
             except Exception as e:
                 print(e)
                 print("Client disconnected")
@@ -81,9 +79,9 @@ class Server:
             elif command[0] == "get-debt":
                 self.handle_get_debt(conn, name)
             elif command[0] == "get-data":
-                self.get_handle_data(conn, name)
+                self.handle_get_data(conn, name)
             elif command[0] == "get-data-pretty":
-                self.get_handle_data_pretty(conn, name)
+                self.handle_get_data_pretty(conn, name)
             elif command[0] == "help":
                 self.help(conn)
             else:

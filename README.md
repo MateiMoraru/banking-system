@@ -1,10 +1,18 @@
 # Banking System
 ## Description
-This banking system is a play on real bank's transactions and mechanisms. Using *mongoDB* in *python*, the user can easily connect to the server and start making some transactions.
+This project is an attempt at recreating real bank's monetization and transaction systems. Using *mongoDB* in *python*, the user can easily connect to the server and start making some transactions between accounts and more.
+
 ## How to use
 First of all, make sure you have all the required libraries installed by running `pip install requirements.txt` in your command line.
-After the installation is over, you can go ahead and run *server.py* (either by running *run-server.bat* or typing `python server.py` in your command line). Do the same thing in order to run *client.py*. Now you can go ahead and type *help* in your client side, and start using commands.
-## Dependencies
+After the installation is over, you can go ahead and run *server.py* (either by running *run-server.bat* or typing `python server.py` in your command line). Do the same thing in order to run *client.py*. Now, you can type *help* in your client side to start using commands.
+
+## Used Dependencies
+- PyMongo -> Used for creating an easy accessed class that maintains the local MongoDB database;
+- Sockets -> For communicating over the internet with different computers;
+- Threading -> To create new instances of *clients* that are stored in the server's variables;
+- Getpass -> To type hidden passwords.
 
 ## Features
-- Due to MongoDB's speed and scalability, the program offers fast responses.
+1. Due to MongoDB's speed and scalability, the program offers fast and accurate responses;
+2. Easy to use. Although the program is ran in the terminal, it's really easy to use due to all the information that's listed below;
+3. Capable of holding lots of people connected to the server at once, without any errors/glitches occuring;
