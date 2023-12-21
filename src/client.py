@@ -33,26 +33,16 @@ class Client:
 
 
     def run(self):
-        resp = self.recv()
-        self.process_recv(resp)
-        resp = self.recv()
-        self.process_recv(resp)
-        if resp == "shutdown":
-            print("Failed to recognise account, try creating one.")
-            self.shutdown()
-        
         while True:
-            data = input(">")
             print()
+            data = input(">")
             self.send(data)
-
             resp = self.recv()
             self.process_recv(resp)
 
             if "Do you want to add the difference to your debt" in resp:
                 ans = input("")
                 self.send(ans)
-            
                 resp = self.recv()
                 self.process_recv(resp)
 
@@ -61,11 +51,9 @@ class Client:
         name = input("Name: ")
         password = getpass.getpass(prompt="Password: ")
         credentials = name + ' ' + password
-
         self.send(credentials)
 
         confirmation = self.recv()
-
         if "No password provided" in confirmation:
             print(confirmation)
             self.signup()
@@ -74,8 +62,7 @@ class Client:
             self.signup()
         else:
             print(confirmation)
-
-        print("Please login again\n")
+        print("Please login again")
 
         
     def login(self):
@@ -93,9 +80,8 @@ class Client:
             print("The credentials you entered weren't found in our database.\n Try again.\n")
             self.login()
         elif "Logged in successfully" in confirmation:
-            self.user_rights = self.recv()
-            self.user_name = name
-            print(f"Logged in successfully, with {self.user_rights} rights.\n")
+            self.recv()
+            print(f"Logged in successfully.")
         elif confirmation == "Account not recognised":
             print("\n Your account was not found in our database.\n Try creating one.\n")
 
@@ -112,7 +98,6 @@ class Client:
 
         if bytes_all != bytes_sent:
             return False
-        
         return True
     
 
