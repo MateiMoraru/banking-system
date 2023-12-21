@@ -22,7 +22,6 @@ class Client:
 
         signup = input("Do you want to create an account? yes/no\n")
         self.send(signup)
-
         if signup == "yes":
            self.signup()
            self.login()

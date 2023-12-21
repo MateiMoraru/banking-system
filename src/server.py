@@ -26,14 +26,13 @@ class Server:
             conn, addr = self.socket.accept()
             print(f"Client connected from {addr}")
             self.connections.append(conn)
-            self.handle_conn(conn)
-            # try:    
-            #     client = threading.Thread(target=self.handle_conn, args=[conn])
-            #     client.start()
-            # except Exception as e:
-            #     print(e)
-            #     print("Client disconnected")
-            #     self.shutdown(conn)
+            try:    
+                client = threading.Thread(target=self.handle_conn, args=[conn])
+                client.start()
+            except Exception as e:
+                print(e)
+                print("Client disconnected")
+                self.shutdown(conn)
     
 
     def handle_conn(self, conn: socket.socket):
@@ -52,12 +51,11 @@ class Server:
         else:
             self.send(conn, "logged in")
 
-        self.loop(conn, name)
-        # try:
-        #     self.loop(conn, name)
-        # except Exception as e:
-        #     print(e)
-        #     self.shutdown()
+        try:
+            self.loop(conn, name)
+        except Exception as e:
+            print(e)
+            self.shutdown()
 
 
     def loop(self, conn:socket.socket, name:str):

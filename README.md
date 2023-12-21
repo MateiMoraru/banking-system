@@ -2,7 +2,6 @@
 ## Description
 This project is an attempt at recreating real bank's monetization and transaction systems. Using *mongoDB* in *python*, the user can easily connect to the server and start making some transactions between accounts and more.
 
-
 ## How to use
 First of all, make sure you have all the required libraries installed by running `pip install requirements.txt` in your command line.
 After the installation is over, you can go ahead and run *server.py* (either by running *run-server.bat* or typing `python server.py` in your command line). Do the same thing in order to run *client.py*. Now, you can type *help* in your client side to start using commands.
@@ -19,3 +18,6 @@ After the installation is over, you can go ahead and run *server.py* (either by 
 3. Capable of holding lots of people connected to the server at once, without any errors/glitches occuring;
 ## Examples
 ![example 1](assets/example_1.png)
+
+## Help
+Feel free to ask any questions, either on *github* or on my [email](mailto:moraru.matei24@gmail.com).
