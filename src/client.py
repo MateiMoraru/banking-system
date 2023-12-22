@@ -91,7 +91,6 @@ class Client:
             print("The credentials you entered weren't found in our database.\n Try again.")
             self.login()
         elif "Logged in successfully" in confirmation:
-            self.recv()
             print(f"Logged in successfully.")
         elif confirmation == "Account not recognised":
             print("\n Your account was not found in our database.\n Try creating one.")

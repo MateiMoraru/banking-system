@@ -42,14 +42,15 @@ class Server:
         if signup == 'yes':
             self.signup(conn)
             name = self.login(conn)
-            print(name)
         else:
             name = self.login(conn)
-            print(name)
         if name == False:
             self.send(conn, "shutdown")
+            print("Invalid name error!")
+            self.shutdown()
         else:
             self.send(conn, "logged in")
+            print(f"{name} just logged in!")
 
         try:
             self.loop(conn, name)
@@ -59,7 +60,6 @@ class Server:
 
 
     def loop(self, conn:socket.socket, name:str):
-        print(name)
         while True:
             command = self.recv(conn).split(' ')
             if command[0] == "shutdown":
@@ -106,7 +106,9 @@ class Server:
             return
         self.database.deposit(name, value)
         balance = self.database.get_balance(name)
-        self.send(conn, f"Your current balance has been increased to {balance}$-w")
+        msg = f"Your current balance has been increased to {balance}$-w"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
 
     def handle_withdraw(self, conn:socket.socket, name:str, command:List[int]):
@@ -126,7 +128,9 @@ class Server:
                 return
         self.database.withdraw(name, balance)
         balance = self.database.get_balance(name)
-        self.send(conn, f"Your current balance has been decreased to {balance}-w")
+        msg = f"Your current balance has been decreased to {balance}-w"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
 
     def handle_send(self, conn:socket.socket, name:str, command:List):
@@ -153,6 +157,8 @@ class Server:
                 value = current_balance
             self.database.send_to(name, account, value)
             self.send(conn, "Transfer finished-w")
+            transaction = self.database.get_transactions(name)[-1]
+            print(transaction)
         else:
             self.send(conn, f"User {account} doesn't exists-w")
 
@@ -181,7 +187,9 @@ class Server:
                     
         self.database.pay_debt(name, value)
         self.database.add_credit(name, value // 100)
-        self.send(conn, f"Your current debt is: {self.database.get_debt(name)}-w")
+        msg = f"Your current debt is: {self.database.get_debt(name)}-w"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
     
 
     def handle_loan(self, conn:socket.socket, name:str, command:List):
@@ -204,22 +212,30 @@ class Server:
 
     def handle_get_balance(self, conn:socket.socket, name:str):
         balance = self.database.get_balance(name)
-        self.send(conn, f"Your current balance is: {balance}$-w")
+        msg = f"Your current balance is: {balance}$-w"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
 
     def handle_get_credit(self, conn:socket.socket, name:str):
         credit = self.database.get_credit(name)
-        self.send(conn, f"Current credit score: {credit}-w")
+        msg = f"Current credit score: {credit}-w"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
 
     def handle_get_debt(self, conn:socket.socket, name:str):
         debt = self.database.get_debt(name)
-        self.send(conn, f"Your current debt is: {debt}$-w")
+        msg = f"Your current debt is: {debt}$-w"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
 
     def handle_get_data(self, conn:socket.socket, name:str):
         data = self.database.get_user(name)
-        self.send(conn, f"Current cursor object: \n {data}-w")
+        msg = f"Current cursor object: \n {data}-w"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
 
     def handle_get_data_pretty(self, conn:socket.socket, name:str):
@@ -234,7 +250,9 @@ class Server:
         data += f"Debt: {user["debt"]}$\n"
         data += f"Credit: {user["credit"]}\n"
         data += f"Transactions:\n{transactions}\n"
-        self.send(conn, data + "-w")
+        msg = data + '-w'
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
     
     def handle_get_transactions(self, conn:socket.socket, name:str):
@@ -242,12 +260,15 @@ class Server:
         raw_transactions = self.database.get_transactions(name)
         for transaction in raw_transactions:
             transactions += database.parse_json(transaction) + "\n"
-        self.send(conn, f"Account history: \n{transactions}-w\n")
+        msg = f"Account history: \n{transactions}-w\n"
+        self.send(conn, msg)
+        print(f"{name}: {msg.replace('-w', '')}")
 
 
     def handle_clear_transactions(self, conn:socket.socket, name:str):
         self.database.clear_transactions(name)
         self.send(conn, "Successfully deleted transaction history-w")
+        print(f"{name} cleaned their transactions history!")
 
     
     def handle_log_out(self, conn:socket.socket, name:str):
@@ -256,10 +277,8 @@ class Server:
         if signup == 'yes':
             self.signup(conn)
             name = self.login(conn)
-            print(name)
         else:
             name = self.login(conn)
-            print(name)
         if name == False:
             self.send(conn, "shutdown")
         else:
@@ -302,7 +321,6 @@ class Server:
 
 
     def login(self, conn: socket.socket, count: int = 0):
-        print("Login")
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
