@@ -71,7 +71,7 @@ class Server:
             elif command[0] == "send":
                 self.handle_send(conn, name, command)
             elif command[0] == "pay-debt":
-                self.handle_pay_debt(conn, name)
+                self.handle_pay_debt(conn, name, command)
             elif command[0] == "loan":
                 self.handle_loan(conn, name, command)
             elif command[0] == "get-balance":
@@ -88,10 +88,12 @@ class Server:
                 self.handle_get_transactions(conn, name)
             elif command[0] == "clear-transactions":
                 self.handle_clear_transactions(conn, name)
+            elif command[0] == "log-out":
+                self.handle_log_out(conn, name)
             elif command[0] == "help":
                 self.help(conn)
             else:
-                self.send(conn, 'Unknown command, try running "-h"-w')
+                self.send(conn, 'Unknown command, try running "help"-w')
             
             print(f"User {name} sent command: {command}")
 
@@ -247,6 +249,23 @@ class Server:
         self.database.clear_transactions(name)
         self.send(conn, "Successfully deleted transaction history-w")
 
+    
+    def handle_log_out(self, conn:socket.socket, name:str):
+        self.send(conn, "Signup?")
+        signup = self.recv(conn)
+        if signup == 'yes':
+            self.signup(conn)
+            name = self.login(conn)
+            print(name)
+        else:
+            name = self.login(conn)
+            print(name)
+        if name == False:
+            self.send(conn, "shutdown")
+        else:
+            self.send(conn, "logged in")
+        return name
+
 
     def help(self, conn:socket.socket):
         commands = ""
@@ -267,10 +286,10 @@ class Server:
     def signup(self, conn: socket.socket):
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
-        password = credentials.split(' ')[1]
-        if len(password) < 1:
-            print("No password provided")
-            self.send(conn, "No password provided-w")
+        pin = credentials.split(' ')[1]
+        if len(pin) < 1:
+            print("No pin provided")
+            self.send(conn, "No pin provided-w")
             self.signup(conn)
 
         
@@ -278,7 +297,7 @@ class Server:
             self.send(conn, "Account already exists-w")
             self.signup(conn)
         else:
-            self.database.add_user(name, password, "user")
+            self.database.add_user(name, pin, "user")
             self.send(conn, "Account created successfully-w")
 
 
@@ -286,13 +305,13 @@ class Server:
         print("Login")
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
-        password = credentials.split(' ')[1]
-        if len(password) < 1:
-            print("No password provided")
-            self.send(conn, "No password provided")
+        pin = credentials.split(' ')[1]
+        if len(pin) < 1:
+            print("No pin provided")
+            self.send(conn, "No pin provided")
             self.login(conn)
         
-        resp = self.database.search_name_pwd(name, password)
+        resp = self.database.search_name_pwd(name, pin)
 
         if count <= 2 and resp is None:
             self.send(conn, "Wrong credentials-w")

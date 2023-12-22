@@ -20,13 +20,7 @@ class Client:
         self.socket.connect(self.server_addr)
         print(f"Connected to host {self.server_addr}")
 
-        signup = input("Do you want to create an account? yes/no\n")
-        self.send(signup)
-        if signup == "yes":
-           self.signup()
-           self.login()
-        else:
-           self.login()
+        self.handle_log_out()
 
         self.run()
 
@@ -44,16 +38,31 @@ class Client:
                 self.send(ans)
                 resp = self.recv()
                 self.process_recv(resp)
+            elif "Signup?" in resp:
+                self.handle_log_out()
+
+
+    def handle_log_out(self):
+        signup = input("Do you want to create an account? yes/no\n")
+        self.send(signup)
+        if signup == "yes":
+           self.signup()
+           self.login()
+        else:
+           self.login()
 
     
     def signup(self):
         name = input("Name: ")
-        password = getpass.getpass(prompt="Password: ")
-        credentials = name + ' ' + password
+        pin = getpass.getpass(prompt="pin: ")
+        while len(pin) != 4:
+            print("Please insert a pin such as: 1234")
+            pin = getpass.getpass(prompt="pin: ")
+        credentials = name + ' ' + pin
         self.send(credentials)
 
         confirmation = self.recv()
-        if "No password provided" in confirmation:
+        if "No pin provided" in confirmation:
             print(confirmation)
             self.signup()
         elif "Account already exists" in confirmation:
@@ -66,23 +75,26 @@ class Client:
         
     def login(self):
         name = input("Name: ")
-        password = getpass.getpass(prompt="Password: ")
-        credentials = name + ' ' + password
+        pin = getpass.getpass(prompt="pin: ")
+        while len(pin) != 4:
+            print("Please insert a pin such as: 1234")
+            pin = getpass.getpass(prompt="pin: ")
+        credentials = name + ' ' + pin
         print()
 
         self.send(credentials)
         confirmation = self.recv()
-        if "No password provided" in confirmation:
+        if "No pin provided" in confirmation:
             print(confirmation)
             self.login()
         elif confirmation == "Wrong credentials":
-            print("The credentials you entered weren't found in our database.\n Try again.\n")
+            print("The credentials you entered weren't found in our database.\n Try again.")
             self.login()
         elif "Logged in successfully" in confirmation:
             self.recv()
             print(f"Logged in successfully.")
         elif confirmation == "Account not recognised":
-            print("\n Your account was not found in our database.\n Try creating one.\n")
+            print("\n Your account was not found in our database.\n Try creating one.")
 
 
     def shutdown(self):

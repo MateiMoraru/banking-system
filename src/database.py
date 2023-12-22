@@ -18,10 +18,10 @@ class Mongo:
         self.users = self.client["Banking-system"]["clients"]
 
 
-    def add_user(self, name:str, password:str, rights:str):
+    def add_user(self, name:str, pin:str, rights:str):
         data = {
             "name": name, 
-            "password": password, 
+            "pin": pin, 
             "balance": 0,
             "economy": 0,
             "debt": 0,
@@ -87,12 +87,13 @@ class Mongo:
     
     
     def search_name_pwd(self, name:str, pwd:str):
-        find = self.users.find_one({'name': name, 'password': pwd})
+        find = self.users.find_one({'name': name, 'pin': pwd})
         return find != None
 
 
     def deposit(self, name:str, value:int):
         self.users.find_one_and_update({"name": name}, {"$inc":{"balance": value}})
+        self.add_credit(name, value / 5000)
 
 
     def withdraw(self, name:str, value:int):
@@ -110,7 +111,7 @@ class Mongo:
         
 
     def add_debt(self, name:str, value:int):
-        self.users.find_one_and_update({"name": name}, {"$inc":{"debt": value}})
+        self.users.find_one_and_update({"name": name}, {"$inc":{"debt": value * 1.01}})
 
 
     def add_transaction(self, name:str, target:str, value:int):
