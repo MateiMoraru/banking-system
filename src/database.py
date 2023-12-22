@@ -1,9 +1,8 @@
-import random
 import pymongo
 from typing import List
-import json
 from bson import json_util
 import datetime
+import uuid
 
 def parse_json(data):
     return json_util.dumps(data)
@@ -137,11 +136,7 @@ class Mongo:
 
     
     def transaction_id(self):
-        id = ""
-        for i in range(16):
-            n = random.randint(0, 10)
-            id += str(n)
-        return id
+        return uuid.uuid1().hex
 
 def date():
     return datetime.datetime.today().strftime('%Y-%m-%d')
