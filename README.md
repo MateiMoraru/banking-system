@@ -10,7 +10,8 @@ After the installation is over, you can go ahead and run *server.py* (either by 
 - PyMongo -> Used for creating an easy accessed class that maintains the local MongoDB database;
 - Sockets -> For communicating over the internet with different computers;
 - Threading -> To create new instances of *clients* that are stored in the server's variables;
-- Getpass -> To type hidden passwords.
+- Getpass -> To type hidden passwords;
+- UUID -> To generate hashes for transaction ids.
 
 ## Features
 1. Due to MongoDB's speed and scalability, the program offers fast and accurate responses;
