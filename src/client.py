@@ -115,6 +115,7 @@ class Client:
         if '-w' in response:
             response = response[0:len(response) - 2]
             print(response)
+        
 
 
     def recv(self):

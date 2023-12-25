@@ -23,7 +23,7 @@ class Mongo:
             "name": name, 
             "pin": pin, 
             "balance": 0,
-            "economy": 0,
+            "savings": 0,
             "debt": 0,
             "credit": 0,
             "transactions": []
@@ -49,6 +49,13 @@ class Mongo:
         find = self.users.find_one({"name": name})
         if find:
             return int(find["balance"])
+        return None
+    
+
+    def get_savings(self, name:str):
+        find = self.users.find_one({"name": name})
+        if find:
+            return int(find["savings"])
         return None
     
 
@@ -112,6 +119,10 @@ class Mongo:
 
     def add_debt(self, name:str, value:int):
         self.users.find_one_and_update({"name": name}, {"$inc":{"debt": value * 1.01}})
+
+
+    def add_savings(self, name:str, value:int):
+        self.users.find_one_and_update({"name": name}, {"$inc": {"savings": value * 1.01}})
 
 
     def add_transaction(self, name:str, target:str, value:int):
