@@ -1,6 +1,8 @@
 # Banking System
+![mongoDB_icon](assets/mongoDB2.png)
+### [MongoDB documentation page](https://www.mongodb.com/docs/)
 ## Description
-This project is an attempt at recreating real bank's monetization and transaction systems. Using *mongoDB* in *python*, the user can easily connect to the server and start making some transactions between accounts and more.
+This project is an attempt at recreating banks' monetization and transaction systems. Using *mongoDB* in *python*, the user can easily connect to the server and start making some transactions between accounts and more.
 
 ## How to use
 First of all, make sure you have all the required libraries installed by running `pip install requirements.txt` in your command line.
@@ -12,6 +14,10 @@ After the installation is over, you can go ahead and run *server.py* (either by 
 - Threading -> To create new instances of *clients* that are stored in the server's variables;
 - Getpass -> To type hidden passwords;
 - UUID -> To generate hashes for transaction ids.
+
+## MongoDB
+![mongoDB_icon](assets/mongoDB2.png)
+### [MongoDB documentation page](https://www.mongodb.com/docs/)
 
 ## Features
 1. Due to MongoDB's speed and scalability, the program offers fast and accurate responses;
