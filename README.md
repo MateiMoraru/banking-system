@@ -15,9 +15,6 @@ After the installation is over, you can go ahead and run *server.py* (either by 
 - Getpass -> To type hidden passwords;
 - UUID -> To generate hashes for transaction ids.
 
-## MongoDB
-![mongoDB_icon](assets/mongoDB2.png)
-### [MongoDB documentation page](https://www.mongodb.com/docs/)
 
 ## Features
 1. Due to MongoDB's speed and scalability, the program offers fast and accurate responses;
