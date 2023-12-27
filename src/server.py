@@ -16,6 +16,7 @@ class Server:
         self.listening = True
         self.connections = []
         self.locks = [threading.Lock()] #login lock, 
+        self.user_data = []
 
 
     def run(self):
@@ -50,7 +51,6 @@ class Server:
             print("Invalid name error!")
             self.shutdown()
         else:
-            self.send(conn, "logged in")
             print(f"{name} just logged in!")
 
         try:
@@ -63,6 +63,8 @@ class Server:
     def loop(self, conn:socket.socket, name:str):
         while True:
             command = self.recv(conn).split(' ')
+            print(f"User {name} sent command: {command}")
+
             if command[0] == "shutdown":
                 self.shutdown()
             elif command[0] == "deposit":
@@ -95,12 +97,12 @@ class Server:
                 self.handle_clear_transactions(conn, name)
             elif command[0] == "log-out":
                 self.handle_log_out(conn, name)
-            elif command[0] == "help":
+            elif command[0] == "help" or command[0] == "-h":
                 self.help(conn)
             else:
                 self.send(conn, 'Unknown command, try running "help"-w')
             
-            print(f"User {name} sent command: {command}")
+            print()
 
 
     def handle_deposit(self, conn:socket.socket, name:str, command:List[int]):
@@ -350,12 +352,17 @@ class Server:
         commands += "withdraw <value> -> withdraws the value specified from you account\n"
         commands += "pay-debt <value> -> removes the value specified from your account's debt\n"
         commands += "send <name> <value> -> sends the value specified to the account specified\n"
+        commands += "savings <deposit|withdraw> <value>\n"
         commands += "loan <value> <months> -> loans you money if you have enough credit\n"
         commands += "get-balance -> returns your balance\n"
+        commands += "get-savings -> returns your savings balance\n"
+        commands += "get-credit -> returns your credit score\n"
+        commands += "get-debt -> return your current debt\n"
         commands += "get-data -> returns your account's data\n"
         commands += "get-data-pretty -> returns your data in a more readable manner\n"
         commands += "get-transactions -> returns a list of all of your transactions\n"
         commands += "clear-transactions -> deletes transaction history\n"
+        commands += "log-out -> connect to a different account\n"
         commands += "shutdown -> shuts down server\n-w"
         self.send(conn, commands)
 
@@ -366,23 +373,30 @@ class Server:
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
+        if self.database.search_name(name):
+            print(f"Account with the same username ({name}) already exists")
+            self.send(conn, f"Account with the same username ({name}) already exists-w")
+            self.locks[0].release()
+            self.signup(conn)
         if len(pin) < 1:
             print("No pin provided")
             self.send(conn, "No pin provided-w")
+            self.locks[0].release()
             self.signup(conn)
-
         
         if self.database.search_name(name):
             self.send(conn, "Account already exists-w!")
+            self.locks[0].release()
             self.signup(conn)
         else:
             self.database.add_user(name, pin, "user")
             self.send(conn, "Account created successfully-w")
+        
         self.locks[0].release()
 
 
     def login(self, conn: socket.socket, count: int = 0):
-        self.wait_mutex(conn)
+        #self.wait_mutex(conn)
         self.locks[0].acquire()
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
@@ -390,6 +404,12 @@ class Server:
         if len(pin) < 1:
             print("No pin provided")
             self.send(conn, "No pin provided")
+            self.locks[0].release()
+            self.login(conn)
+        if self.logged_in(name):
+            print("User already logged in")
+            self.send(conn, "User already logged in")
+            self.locks[0].release()
             self.login(conn)
         
         resp = self.database.search_name_pwd(name, pin)
@@ -400,6 +420,9 @@ class Server:
             return
         if resp:
             self.send(conn, "Logged in successfully-w")
+            user_data = self.database.get_user_raw(name)
+            self.user_data.append(user_data)
+            print(user_data)
             return name
         
         self.send(conn, "Account not recognised-w")
@@ -410,6 +433,14 @@ class Server:
         while self.locks[0].locked() is True:
             self.send(conn, "Function currently locked, wait.-w")
         self.send(conn, "Done-w")
+
+    
+    def logged_in(self, name):
+        for user in self.user_data:
+            print(user)
+            if user["name"] == name:
+                return True
+        return False
 
 
     def shutdown(self):

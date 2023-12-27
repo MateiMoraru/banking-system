@@ -66,13 +66,6 @@ class Mongo:
         return None
     
 
-    def get_debt(self, name:str):
-        find = self.users.find_one({"name": name})
-        if find:
-            return int(find["debt"])
-        return None
-    
-
     def get_credit(self, name:str):
         find = self.users.find_one({"name": name})
         if find:

@@ -22,7 +22,11 @@ class Client:
 
         self.handle_log_out()
 
-        self.run()
+        try:
+            self.run()
+        except Exception as e:
+            print(f"ERROR: {e}")
+            self.shutdown()
 
 
     def run(self):
@@ -66,6 +70,9 @@ class Client:
         if "No pin provided" in confirmation:
             print(confirmation)
             self.signup()
+        elif "already exists" in confirmation:
+            self.process_recv(confirmation)
+            self.signup()
         elif "Account already exists" in confirmation:
             print(f"{confirmation}, try again")
             self.signup()
@@ -75,7 +82,7 @@ class Client:
 
         
     def login(self):
-        self.wait_mutex()            
+        #self.wait_mutex()            
 
         name = input("Name: ")
         pin = getpass.getpass(prompt="pin: ")
@@ -90,6 +97,9 @@ class Client:
         if "No pin provided" in confirmation:
             print(confirmation)
             self.login()
+        elif "already logged in" in confirmation:
+            print(confirmation)
+            self.login()
         elif confirmation == "Wrong credentials":
             print("The credentials you entered weren't found in our database.\n Try again.")
             self.login()
@@ -101,6 +111,7 @@ class Client:
     def wait_mutex(self):
         mutex = self.recv()
         while 'Done' not in mutex:
+            print(mutex)
             mutex = self.recv()    
         self.process_recv(mutex)
 
