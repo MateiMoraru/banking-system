@@ -15,6 +15,7 @@ class Server:
         self.database = database.Mongo()
         self.listening = True
         self.connections = []
+        self.locks = [threading.Lock()] #login lock, 
 
 
     def run(self):
@@ -360,6 +361,8 @@ class Server:
 
 
     def signup(self, conn: socket.socket):
+        self.wait_mutex(conn)
+        self.locks[0].acquire()
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
@@ -375,9 +378,12 @@ class Server:
         else:
             self.database.add_user(name, pin, "user")
             self.send(conn, "Account created successfully-w")
+        self.locks[0].release()
 
 
     def login(self, conn: socket.socket, count: int = 0):
+        self.wait_mutex(conn)
+        self.locks[0].acquire()
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
@@ -387,6 +393,7 @@ class Server:
             self.login(conn)
         
         resp = self.database.search_name_pwd(name, pin)
+        self.locks[0].release()
 
         if count <= 2 and resp is None:
             self.send(conn, "Wrong credentials-w")
@@ -397,6 +404,12 @@ class Server:
         
         self.send(conn, "Account not recognised-w")
         return False
+    
+
+    def wait_mutex(self, conn: socket.socket):
+        while self.locks[0].locked() is True:
+            self.send(conn, "Function currently locked, wait.-w")
+        self.send(conn, "Done-w")
 
 
     def shutdown(self):

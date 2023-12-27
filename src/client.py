@@ -53,6 +53,7 @@ class Client:
 
     
     def signup(self):
+        self.wait_mutex()
         name = input("Name: ")
         pin = getpass.getpass(prompt="pin: ")
         while len(pin) != 4:
@@ -74,6 +75,8 @@ class Client:
 
         
     def login(self):
+        self.wait_mutex()            
+
         name = input("Name: ")
         pin = getpass.getpass(prompt="pin: ")
         while len(pin) != 4:
@@ -94,6 +97,12 @@ class Client:
             print(f"Logged in successfully.")
         elif confirmation == "Account not recognised":
             print("\n Your account was not found in our database.\n Try creating one.")
+
+    def wait_mutex(self):
+        mutex = self.recv()
+        while 'Done' not in mutex:
+            mutex = self.recv()    
+        self.process_recv(mutex)
 
 
     def shutdown(self):
