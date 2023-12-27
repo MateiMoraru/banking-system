@@ -112,7 +112,7 @@ class Server:
                 self.send(conn, 'The "value" arguments has to be positive!-w')
                 return
         except:
-            self.send(conn, 'Wrong arguments for command, expected "deposit <value>"!-w')
+            self.send(conn, '!!! Wrong !!! arguments: expected "deposit <value>"!-w')
             return
         self.database.deposit(name, value)
         balance = self.database.get_balance(name)
@@ -128,12 +128,12 @@ class Server:
                 self.send(conn, 'The "value" arguments has to be positive!-w')
                 return
         except:
-            self.send(conn, 'Wrong arguments for command, expected "withdraw <value>"!-w')
+            self.send(conn, '!!! Wrong !!! arguments: expected "withdraw <value>"!-w')
             return
                 
         balance = self.database.get_balance(name)
         if balance < value:
-            self.send(conn, f"You have insufficient funds!\nDo you want to add the difference to your debt? yes/no\n-w")
+            self.send(conn, f"You have !!! insufficient !!! funds!\nDo you want to add the difference to your debt? yes/no\n-w")
             resp = self.recv(conn)
             if resp == 'yes':
                 self.database.add_debt(name, value - balance)
@@ -141,7 +141,7 @@ class Server:
                 return
         self.database.withdraw(name, balance)
         balance = self.database.get_balance(name)
-        msg = f"Your current balance has been decreased to {balance}-w"
+        msg = f"Your current balance has been decreased to {balance}$-w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -151,17 +151,17 @@ class Server:
             account = command[1]
             value = int(command[2])
             if value < 0:
-                self.send(conn, 'The "value" argument has to be positive!-w')
+                self.send(conn, '!!!2 Wrong arguments: The "value" argument has to be positive!-w')
                 return
         except:
-            self.send(conn, 'Wrong arguments for command, expected "send <account-name> <value>"!-w')
+            self.send(conn, '!!!2 Wrong arguments: expected "send <account-name> <value>"!-w')
             return
 
         check = self.database.search_name(account)
         current_balance = self.database.get_balance(name)
         debt = False
         if value > current_balance:
-            self.send(conn, "Transfer failed due to insufficient funds!\nDo you want to add the difference to your debt? yes/no\n-w")
+            self.send(conn, "Transfer failed due to !!! insufficient !!! funds!\nDo you want to add the difference to your debt? yes/no\n-w")
             resp = self.recv(conn)
             if resp == "yes":
                 self.database.add_debt(name, value - current_balance)
@@ -176,7 +176,7 @@ class Server:
             transaction = self.database.get_transactions(name)[-1]
             print(transaction)
         else:
-            self.send(conn, f"User {account} doesn't exists!-w")
+            self.send(conn, f"User !!! {account} doesn't exist!-w")
 
 
     def handle_pay_debt(self, conn:socket.socket, name:str, command:List[str]):
@@ -191,14 +191,14 @@ class Server:
                 self.send(conn, 'The "value" arguments has to be positive!-w')
                 return
         except:
-            self.send(conn, 'Wrong arguments for command, expected "pay-debt <value>"!-w')
+            self.send(conn, '!!! Wrong !!! arguments: expected "pay-debt <value>"!-w')
             return
                 
         balance = self.database.get_balance(name)
         if debt <= 0:
             self.send(conn, "You don't have any debt-w")
         if balance < value:
-            self.send(conn, "You have insufficient funds. Try depositing first!-w")
+            self.send(conn, "You have !!! insufficient !!! funds. Try depositing first!-w")
             return
         elif value > debt:
             value = debt
@@ -207,7 +207,7 @@ class Server:
         self.database.pay_debt(name, value)
         self.database.add_credit(name, value // 100)
         self.database.add_transaction(name, "Bank", value)
-        msg = f"Your current debt is: {self.database.get_debt(name)}-w"
+        msg = f"Your current debt is: {self.database.get_debt(name)}$-w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -220,7 +220,7 @@ class Server:
                 self.send(conn, 'The "value" arguments has to be positive!-w')
                 return
         except:
-            self.send(conn, 'Wrong arguments for command, expected "savings <withdraw|deposit>" <value>-w')
+            self.send(conn, '!!! Wrong !!! arguments: expected "savings <withdraw|deposit>" <value>-w')
             return
         
         if operation == "deposit":
@@ -228,19 +228,19 @@ class Server:
                 self.database.withdraw(name, value)
                 self.database.add_savings(name, value)
                 savings = self.database.get_savings(name)
-                self.send(conn, f"Your savings account balance has been increased to: {savings}-w")
+                self.send(conn, f"Your savings account balance has been increased to: {savings}$-w")
             else:
-                self.send(conn, "Insufficient funds!-w")
+                self.send(conn, "!!! Insufficient !!! funds!-w")
         elif operation == "withdraw":
             if self.database.get_savings(name) >= value:
                 self.database.deposit(name, value)
                 self.database.add_savings(name, -value)
                 savings = self.database.get_savings(name)
-                self.send(conn, f"Your savings account balance has been decreased to: {savings}-w")
+                self.send(conn, f"Your savings account balance has been decreased to: {savings}$-w")
             else:
-                self.send(conn, "Insufficient funds in savings account!-w")
+                self.send(conn, "!!! Insufficient !!! funds in savings account!-w")
         else:
-            self.send(conn, 'Wrong arguments for command, expected "savings <withdraw|deposit>" <value>-w')
+            self.send(conn, '!!! Wrong !!! arguments: expected "savings <withdraw|deposit>" <value>-w')
 
 
     def handle_loan(self, conn:socket.socket, name:str, command:List):
@@ -251,7 +251,7 @@ class Server:
                 self.send(conn, 'The "value" arguments has to be positive!-w')
                 return
         except:
-            self.send(conn, 'Wrong arguments for command, expected "loan <value> <months>"!-w')
+            self.send(conn, '!!! Wrong !!! arguments: expected "loan <value> <months>"!-w')
             return
                 
         credit = self.database.get_credit(name)
@@ -261,12 +261,12 @@ class Server:
             self.database.deposit(name, value)
             self.send(conn, f"Loan accepted. You have {months} months to pay it back.-w")
         else:
-            self.send(conn, f"Loan not accepted due to insuficient credit! Required credit: {required_credit}-w")
+            self.send(conn, f"Loan not accepted due to !!! insuficient !!! credit! Required credit: {required_credit}-w")
 
 
     def handle_get_balance(self, conn:socket.socket, name:str):
         balance = self.database.get_balance(name)
-        msg = f"Your current balance is: {balance}$ -w"
+        msg = f"Your current balance is: {balance}$-w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -294,7 +294,7 @@ class Server:
 
     def handle_get_data(self, conn:socket.socket, name:str):
         data = self.database.get_user(name)
-        msg = f"Current cursor object: \n {data}-w"
+        msg = f"Current cursor object: \n{data}-w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -330,7 +330,7 @@ class Server:
 
     def handle_clear_transactions(self, conn:socket.socket, name:str):
         self.database.clear_transactions(name)
-        self.send(conn, "Successfully deleted transaction history-w")
+        self.send(conn, "Successfully !!! deleted transaction history-w")
         print(f"{name} cleaned their transactions history!")
 
     
@@ -404,23 +404,29 @@ class Server:
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
+        confirm_name = None
+
+        if count >= 3:
+            self.send(conn, "You have attempted to login 3 times.\nTry again later.")
+
         if len(pin) < 1:
             print("No pin provided")
             self.send(conn, "No pin provided")
             self.lock.release()
-            self.login(conn)
+            confirm_name = self.login(conn)
         if self.logged_in(name):
             print("User already logged in")
             self.send(conn, "User already logged in")
             self.lock.release()
-            self.login(conn)
+            confirm_name = self.login(conn)
         
         resp = self.database.search_name_pwd(name, pin)
+        print(resp)
         self.lock.release()
 
-        if count <= 2 and resp is None:
+        if count <= 2 and resp is False:
             self.send(conn, "Wrong credentials-w")
-            return
+            confirm_name = self.login(conn, count + 1)
         if resp:
             self.send(conn, "Logged in successfully-w")
             user_data = self.database.get_user_raw(name)
@@ -428,8 +434,9 @@ class Server:
             print(self.handle_get_data_pretty(None, name))
             return name
         
-        self.send(conn, "Account not recognised-w")
-        return False
+        if confirm_name is None:
+            self.send(conn, "Account not recognised-w")
+        return confirm_name
     
 
     def wait_mutex(self, conn: socket.socket):

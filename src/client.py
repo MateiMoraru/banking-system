@@ -1,6 +1,7 @@
 import socket
 import getpass
 import sys
+from colorama import *
 
 class Client:
     ENCODING = "UTF-8"
@@ -14,6 +15,7 @@ class Client:
         self.user_name = "None"
         self.user_rights = "None"
         self.path = ""
+        init() # From colorama
 
     
     def connect(self):
@@ -100,13 +102,13 @@ class Client:
         elif "already logged in" in confirmation:
             print(confirmation)
             self.login()
-        elif confirmation == "Wrong credentials":
-            print("The credentials you entered weren't found in our database.\n Try again.")
+        elif "Wrong credentials" in confirmation:
+            print("The credentials you entered weren't found in our database.\nTry again.")
             self.login()
         elif "Logged in successfully" in confirmation:
             print(f"Logged in successfully.")
         elif confirmation == "Account not recognised":
-            print("\n Your account was not found in our database.\n Try creating one.")
+            print("\n Your account was not found in our database.\nTry creating one.")
 
     def wait_mutex(self):
         mutex = self.recv()
@@ -132,10 +134,25 @@ class Client:
     
 
     def process_recv(self, response:str):
+        resp_arr = response.split(' ')
+        if '$' in response:
+            cash = resp_arr[-2]
+            color = Fore.GREEN + cash + Fore.RESET
+            response = response.replace(cash, color)
+        if '!!!' in response or '!!!2' in response:
+            flag = '!!!'
+            if '!!!2' in response:
+                flag = '!!!2'
+            idx = resp_arr.index(flag)
+            warn = resp_arr[idx + 1]
+            if flag == '!!!2':
+                warn += ' ' + resp_arr[idx + 2]
+            color = Fore.RED + warn + Fore.RESET
+            response = response.replace(flag, '')
+            response = response.replace(warn, color)
         if '-w' in response:
-            response = response[0:len(response) - 2]
+            response = response.replace('-w', Fore.RESET)
             print(response)
-        
 
 
     def recv(self):
