@@ -11,7 +11,7 @@ After the installation is over, you can go ahead and run *server.py* (either by 
 ## Used Dependencies
 - PyMongo -> Used for creating an easy accessed class that maintains the local MongoDB database;
 - Sockets -> For communicating over the internet with different computers;
-- Threading -> To create new instances of *clients* that are stored in the server's variables;
+- Threading -> To create threads of *clients* that run simultaneously, as well to create mutex locks that block people from using the same function at once (when more than 2 connections running that function can result in errors. [Read more](https://stackoverflow.com/questions/34524/what-is-a-mutex));
 - Getpass -> To type hidden passwords;
 - UUID -> To generate hashes for transaction ids.
 
