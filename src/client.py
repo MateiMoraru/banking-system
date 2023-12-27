@@ -84,8 +84,7 @@ class Client:
 
         
     def login(self):
-        #self.wait_mutex()            
-
+        self.wait_mutex()            
         name = input("Name: ")
         pin = getpass.getpass(prompt="pin: ")
         while len(pin) != 4:
@@ -112,10 +111,11 @@ class Client:
 
     def wait_mutex(self):
         mutex = self.recv()
+        if 'Done' not in mutex:
+            print("Wait, the function is currently being used by an other account.") 
         while 'Done' not in mutex:
-            print(mutex)
             mutex = self.recv()    
-        self.process_recv(mutex)
+        print("Acquired lock")
 
 
     def shutdown(self):

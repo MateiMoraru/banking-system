@@ -399,7 +399,7 @@ class Server:
 
 
     def login(self, conn: socket.socket, count: int = 0):
-        #self.wait_mutex(conn)
+        self.wait_mutex(conn)
         self.lock.acquire()
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
