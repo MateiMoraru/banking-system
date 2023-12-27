@@ -1,3 +1,4 @@
+import hashlib
 import pymongo
 from typing import List
 from bson import json_util
@@ -119,18 +120,19 @@ class Mongo:
 
 
     def add_transaction(self, name:str, target:str, value:int):
-        id = self.transaction_id()
+        id = self.transaction_id(date(), name, target, value)
+        print(id)
         data_sender = {
             "date": date(),
             "to": target,
             "value": value,
-            "id": id
+            "hash": id
         }
         data_recv = {
             "date": date(),
             "from": name,
             "value": value,
-            "id": id
+            "hash": id
         }
         self.users.find_one_and_update({"name": name}, {"$push": {"transactions": data_sender}})
         self.users.find_one_and_update({"name": target}, {"$push": {"transactions": data_recv}})
@@ -140,8 +142,10 @@ class Mongo:
         find = self.users.find_one_and_update({"name": name}, {"$set": {"transactions": []}})
 
     
-    def transaction_id(self):
-        return uuid.uuid1().hex
+    def transaction_id(self, date, name, target, value):
+        data = f"{date} {name} {target} {value}"
+        hash_object = hashlib.md5(data.encode("utf-8"))
+        return hash_object.hexdigest()
 
 def date():
     return datetime.datetime.today().strftime('%Y-%m-%d')

@@ -15,7 +15,7 @@ class Server:
         self.database = database.Mongo()
         self.listening = True
         self.connections = []
-        self.locks = [threading.Lock()] #login lock, 
+        self.lock = threading.Lock()# Login lock
         self.user_data = []
 
 
@@ -151,7 +151,7 @@ class Server:
             account = command[1]
             value = int(command[2])
             if value < 0:
-                self.send(conn, 'The "value" arguments has to be positive!-w')
+                self.send(conn, 'The "value" argument has to be positive!-w')
                 return
         except:
             self.send(conn, 'Wrong arguments for command, expected "send <account-name> <value>"!-w')
@@ -206,6 +206,7 @@ class Server:
                     
         self.database.pay_debt(name, value)
         self.database.add_credit(name, value // 100)
+        self.database.add_transaction(name, "Bank", value)
         msg = f"Your current debt is: {self.database.get_debt(name)}-w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
@@ -302,16 +303,18 @@ class Server:
         transactions = ""
         raw_transactions = self.database.get_transactions(name)
         for transaction in raw_transactions:
-            transactions += database.parse_json(transaction) + "\n"
+            transactions += "\t" + database.parse_json(transaction) + "\n"
         data = ""
         user = self.database.get_user_raw(name)
         data += f"Name: {user["name"]}\n"
         data += f"Balance: {user["balance"]}$\n"
+        data += f"Savings: {user["savings"]}$\n"
         data += f"Debt: {user["debt"]}$\n"
         data += f"Credit: {user["credit"]}\n"
         data += f"Transactions:\n{transactions}\n"
         msg = data + '-w'
-        self.send(conn, msg)
+        if conn is not None:
+            self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
     
@@ -369,51 +372,51 @@ class Server:
 
     def signup(self, conn: socket.socket):
         self.wait_mutex(conn)
-        self.locks[0].acquire()
+        self.lock.acquire()
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
         if self.database.search_name(name):
             print(f"Account with the same username ({name}) already exists")
             self.send(conn, f"Account with the same username ({name}) already exists-w")
-            self.locks[0].release()
+            self.lock.release()
             self.signup(conn)
         if len(pin) < 1:
             print("No pin provided")
             self.send(conn, "No pin provided-w")
-            self.locks[0].release()
+            self.lock.release()
             self.signup(conn)
         
         if self.database.search_name(name):
             self.send(conn, "Account already exists-w!")
-            self.locks[0].release()
+            self.lock.release()
             self.signup(conn)
         else:
             self.database.add_user(name, pin, "user")
             self.send(conn, "Account created successfully-w")
         
-        self.locks[0].release()
+        self.lock.release()
 
 
     def login(self, conn: socket.socket, count: int = 0):
         #self.wait_mutex(conn)
-        self.locks[0].acquire()
+        self.lock.acquire()
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
         if len(pin) < 1:
             print("No pin provided")
             self.send(conn, "No pin provided")
-            self.locks[0].release()
+            self.lock.release()
             self.login(conn)
         if self.logged_in(name):
             print("User already logged in")
             self.send(conn, "User already logged in")
-            self.locks[0].release()
+            self.lock.release()
             self.login(conn)
         
         resp = self.database.search_name_pwd(name, pin)
-        self.locks[0].release()
+        self.lock.release()
 
         if count <= 2 and resp is None:
             self.send(conn, "Wrong credentials-w")
@@ -422,7 +425,7 @@ class Server:
             self.send(conn, "Logged in successfully-w")
             user_data = self.database.get_user_raw(name)
             self.user_data.append(user_data)
-            print(user_data)
+            print(self.handle_get_data_pretty(None, name))
             return name
         
         self.send(conn, "Account not recognised-w")
@@ -430,7 +433,7 @@ class Server:
     
 
     def wait_mutex(self, conn: socket.socket):
-        while self.locks[0].locked() is True:
+        while self.lock.locked() is True:
             self.send(conn, "Function currently locked, wait.-w")
         self.send(conn, "Done-w")
 
