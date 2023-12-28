@@ -48,7 +48,7 @@ class Client:
                 self.handle_get_password(resp)
                 
 
-    def add_to_debt(self):
+    def handle_add_to_debt(self):
         ans = input("")
         self.send(ans)
         resp = self.recv()
@@ -56,9 +56,9 @@ class Client:
 
     
     def handle_get_password(self, resp: str):
-        self.process_recv(resp)
         password = input()
         self.send(self.hash(password))
+        resp = self.recv()
         self.process_recv(resp)
 
 
@@ -152,16 +152,16 @@ class Client:
     def process_recv(self, response:str):
         resp_arr = response.split(' ')
         if '$' in response:
-            cash = resp_arr[-2]
+            cash = resp_arr[-1]
             color = Fore.GREEN + cash + Fore.RESET
             response = response.replace(cash, color)
-        if '!!!' in response or '!!!2' in response:
-            flag = '!!!'
-            if '!!!2' in response:
-                flag = '!!!2'
-            idx = resp_arr.index(flag)
+        if '!!! ' in response or '!!!2 ' in response:
+            flag = '!!! '
+            if '!!!2 ' in response:
+                flag = '!!!2 '
+            idx = resp_arr.index(flag[:-1])
             warn = resp_arr[idx + 1]
-            if flag == '!!!2':
+            if flag == '!!!2 ':
                 warn += ' ' + resp_arr[idx + 2]
             color = Fore.RED + warn + Fore.RESET
             response = response.replace(flag, '')

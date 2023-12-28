@@ -34,6 +34,14 @@ class Mongo:
     def add_credit(self, name:str, value:int):
         self.users.find_one_and_update({"name": name}, {"$inc":{"credit": value}})
 
+    
+    def get(self, name:str, field:str):
+        find = self.users.find_one({"name": name})
+        if find:
+            print(find[field])
+            return find[field]
+        return None
+
 
     def get_user_raw(self, name:str):
         find = self.users.find_one({"name": name})
@@ -145,10 +153,18 @@ class Mongo:
         self.users.delete_many({})
 
     
-    def transaction_id(self, date, name, target, value):
+    def transaction_id(self, date:str, name:str, target:str, value:str):
         data = f"{date} {name} {target} {value}"
         hash_object = hashlib.md5(data.encode("utf-8"))
         return hash_object.hexdigest()
+    
+
+    def change(self, name:str, operation:str, target_field:str, new_value:str):
+        obj = self.get(name, target_field)
+        if isinstance(obj, int):
+            new_value = int(new_value)
+
+        account = self.users.find_one_and_update({"name": name}, {operation: {target_field: new_value}})
 
 def date():
     return datetime.datetime.today().strftime('%Y-%m-%d')
