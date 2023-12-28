@@ -15,7 +15,7 @@ class Server:
         self.database = database.Mongo()
         self.listening = True
         self.connections = []
-        self.lock = threading.Lock()# Login lock
+        self.lock = [threading.Lock(), -1]# Login mutex lock
         self.user_data = []
 
 
@@ -29,35 +29,40 @@ class Server:
             print(f"Client connected from {addr}")
             self.connections.append(conn)
             try:    
-                client = threading.Thread(target=self.handle_conn, args=[conn])
+                client = threading.Thread(target=self.handle_conn, args=[conn, addr])
                 client.start()
             except Exception as e:
                 print(e)
-                print("Client disconnected")
-                self.shutdown(conn)
+                self.disconnect_conn(conn, addr)
+                #self.shutdown()
     
 
-    def handle_conn(self, conn: socket.socket):
+    def handle_conn(self, conn: socket.socket, addr: str):
         name = None
-        signup = self.recv(conn)
         
-        if signup == 'yes':
-            self.signup(conn)
-            name = self.login(conn)
-        else:
-            name = self.login(conn)
-        if name == False:
-            self.send(conn, "shutdown")
-            print("Invalid name error!")
-            self.shutdown()
-        else:
-            print(f"{name} just logged in!")
-
+        try:
+            signup = self.recv(conn)
+            if signup == 'yes':
+                self.signup(conn)
+                name = self.login(conn)
+            else:
+                name = self.login(conn)
+            if name == False:
+                self.send(conn, "shutdown")
+                print("Invalid name error!")
+                self.disconnect_conn(conn, addr)
+                self.shutdown()
+            else:
+                print(f"{name} just logged in!")
+        except Exception as e:
+            print(e)
+            self.disconnect_conn(conn, addr)
         try:
             self.loop(conn, name)
         except Exception as e:
             print(e)
-            self.shutdown()
+            self.disconnect_conn(conn, addr)
+            #self.shutdown()
 
 
     def loop(self, conn:socket.socket, name:str):
@@ -103,7 +108,6 @@ class Server:
                 self.handle_delete_database(conn, name)
             else:
                 self.send(conn, 'Unknown command, try running "help"-w')
-            
             print()
 
 
@@ -384,35 +388,38 @@ class Server:
 
     def signup(self, conn: socket.socket):
         self.wait_mutex(conn)
-        self.lock.acquire()
+        self.lock[0].acquire()
+        self.lock[1] = self.connections.index(conn)
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
         if self.database.search_name(name):
             print(f"Account with the same username ({name}) already exists")
             self.send(conn, f"Account with the same username ({name}) already exists-w")
-            self.lock.release()
+            self.lock[0].release()
             self.signup(conn)
         if len(pin) < 1:
             print("No pin provided")
             self.send(conn, "No pin provided-w")
-            self.lock.release()
+            self.lock[0].release()
             self.signup(conn)
         
         if self.database.search_name(name):
             self.send(conn, "Account already exists-w!")
-            self.lock.release()
+            self.lock[0].release()
             self.signup(conn)
         else:
             self.database.add_user(name, pin, "user")
             self.send(conn, "Account created successfully-w")
         
-        self.lock.release()
+        self.lock[0].release()
 
 
     def login(self, conn: socket.socket, count: int = 0):
         self.wait_mutex(conn)
-        self.lock.acquire()
+        self.lock[0].acquire()
+        self.lock[1] = self.connections.index(conn)
+        print(self.connections.index(conn))
         credentials = self.recv(conn)
         name = credentials.split(' ')[0]
         pin = credentials.split(' ')[1]
@@ -424,17 +431,17 @@ class Server:
         if len(pin) < 1:
             print("No pin provided")
             self.send(conn, "No pin provided")
-            self.lock.release()
+            self.lock[0].release()
             confirm_name = self.login(conn)
         if self.logged_in(name):
             print("User already logged in")
             self.send(conn, "User already logged in")
-            self.lock.release()
+            self.lock[0].release()
             confirm_name = self.login(conn)
         
         resp = self.database.search_name_pwd(name, pin)
         print(resp)
-        self.lock.release()
+        self.lock[0].release()
 
         if count <= 2 and resp is False:
             self.send(conn, "Wrong credentials-w")
@@ -452,7 +459,7 @@ class Server:
     
 
     def wait_mutex(self, conn: socket.socket):
-        while self.lock.locked() is True:
+        while self.lock[0].locked() is True:
             self.send(conn, "Function currently locked, wait.-w")
         self.send(conn, "Done-w")
 
@@ -472,6 +479,16 @@ class Server:
         sys.exit(0)
 
 
+    def disconnect_conn(self, conn: socket.socket, addr: str):
+        print(f"Client disconnected {addr}")
+        idx = self.connections.index(conn)
+        print(idx, self.lock[1])
+        if idx == self.lock[1]:
+            self.lock[0].release()
+            self.lock[1] = -1
+        self.connections.pop(idx)
+
+
     def send(self, conn: socket.socket, message: str):
         bytes_all = message.encode(self.ENCODING)
         bytes_sent = conn.send(bytes_all)
@@ -485,8 +502,9 @@ class Server:
         try:
             message = conn.recv(self.BUFFER_SIZE).decode(self.ENCODING)
             return message
-        except TimeoutError as e:
+        except Exception as e:
             print(e)
+            self.disconnect_conn(conn, None)
 
 if __name__ == "__main__":
     server = Server()
