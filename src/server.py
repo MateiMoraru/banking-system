@@ -72,16 +72,15 @@ class Server:
                 self.handle_deposit(conn, name, command)
             elif command[0] == "withdraw":
                 self.handle_withdraw(conn, name, command)
-            elif command[0] == "send":
-                self.handle_send(conn, name, command)
             elif command[0] == "pay-debt":
                 self.handle_pay_debt(conn, name, command)
+            elif command[0] == "send":
+                self.handle_send(conn, name, command)
             elif command[0] == "savings":
                 self.handle_savings(conn, name, command)
             elif command[0] == "loan":
                 self.handle_loan(conn, name, command)
             elif command[0] == "get":
-                print("GET")
                 if command[1] == "balance":
                     self.handle_get_balance(conn, name)
                 elif command[1] == "savings":
@@ -96,7 +95,7 @@ class Server:
                     self.handle_get_data_pretty(conn, name)
                 elif command[1] == "transactions":
                     self.handle_get_transactions(conn, name)
-            elif command[0] == "clear-transactions":
+            elif command[0] == "clear" and command[1] == "transactions":
                 self.handle_clear_transactions(conn, name)
             elif command[0] == "log-out":
                 self.handle_log_out(conn, name)
@@ -392,22 +391,24 @@ class Server:
 
     def help(self, conn:socket.socket):
         commands = ""
-        commands += "deposit <value> -> deposits the value specified in your account\n"
-        commands += "withdraw <value> -> withdraws the value specified from you account\n"
-        commands += "pay-debt <value> -> removes the value specified from your account's debt\n"
-        commands += "send <name> <value> -> sends the value specified to the account specified\n"
-        commands += "savings <deposit|withdraw> <value>\n"
-        commands += "loan <value> <months> -> loans you money if you have enough credit\n"
-        commands += "get balance -> returns your balance\n"
-        commands += "get savings -> returns your savings balance\n"
-        commands += "get credit -> returns your credit score\n"
-        commands += "get debt -> return your current debt\n"
-        commands += "get data -> returns your account's data\n"
-        commands += "get data-pretty -> returns your data in a more readable manner\n"
-        commands += "get transactions -> returns a list of all of your transactions\n"
-        commands += "clear-transactions -> deletes transaction history\n"
-        commands += "log-out -> connect to a different account\n"
-        commands += "shutdown -> shuts down server\n-w"
+        commands += "-BLUE- deposit <value> -RESET- -> deposits the value specified in your account\n"
+        commands += "-BLUE- withdraw <value> -RESET- -> withdraws the value specified from you account\n"
+        commands += "-BLUE- pay-debt <value> -RESET- -> removes the value specified from your account's debt\n"
+        commands += "-BLUE- send <name> <value> -RESET- -> sends the value specified to the account specified\n"
+        commands += "-BLUE- savings <deposit|withdraw> <value> -RESET-\n"
+        commands += "-BLUE- loan <value> <months> -RESET- -> loans you money if you have enough credit\n"
+        commands += "-BLUE- get balance -RESET- -> returns your balance\n"
+        commands += "-BLUE- get savings -RESET- -> returns your savings balance\n"
+        commands += "-BLUE- get credit -RESET- -> returns your credit score\n"
+        commands += "-BLUE- get debt -RESET- -> return your current debt\n"
+        commands += "-BLUE- get data -RESET- -> returns your account's data\n"
+        commands += "-BLUE- get data-pretty -RESET- -> returns your data in a more readable manner\n"
+        commands += "-BLUE- get transactions -RESET- -> returns a list of all of your transactions\n"
+        commands += "-BLUE- clear transactions -RESET- -> deletes transaction history\n"
+        commands += "-BLUE- log-out -RESET- -> connect to a different account\n"
+        commands += "-BLUE- shutdown -RESET- -> shuts down server\n-w"
+        commands += "-BLUE- delete database -RESET- -> deletes all the data that the database contains -RED-(requires a password)-RESET-\n"
+        commands += "-BLUE- edit database <target account> <target field> <new value> <operation> -RESET- -> applies the specified operation to the target field specified (requires a password)\n"
         self.send(conn, commands)
 
 

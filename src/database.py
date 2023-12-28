@@ -18,7 +18,7 @@ class Mongo:
         self.users = self.client["Banking-system"]["clients"]
 
 
-    def add_user(self, name:str, pin:str, rights:str):
+    def add_user(self, name:str, pin:str):
         data = {
             "name": name, 
             "pin": pin, 
@@ -38,7 +38,6 @@ class Mongo:
     def get(self, name:str, field:str):
         find = self.users.find_one({"name": name})
         if find:
-            print(find[field])
             return find[field]
         return None
 
@@ -54,38 +53,23 @@ class Mongo:
     
 
     def get_balance(self, name:str):
-        find = self.users.find_one({"name": name})
-        if find:
-            return int(find["balance"])
-        return None
+        return self.get(name, "balance")
     
 
     def get_savings(self, name:str):
-        find = self.users.find_one({"name": name})
-        if find:
-            return int(find["savings"])
-        return None
+        return self.get(name, "savings")
     
 
     def get_debt(self, name:str):
-        find = self.users.find_one({"name": name})
-        if find:
-            return int(find["debt"])
-        return None
+        return self.get(name, "debt")
     
 
     def get_credit(self, name:str):
-        find = self.users.find_one({"name": name})
-        if find:
-            return int(find["credit"])
-        return None
+        return self.get(name, "credit")
     
 
     def get_transactions(self, name:str):
-        find = self.users.find_one({"name": name})
-        if find:
-            return find["transactions"]
-        return None
+        return self.get(name, "transactions")
     
 
     def search_name(self, name:str):

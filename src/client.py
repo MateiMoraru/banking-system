@@ -166,6 +166,12 @@ class Client:
             color = Fore.RED + warn + Fore.RESET
             response = response.replace(flag, '')
             response = response.replace(warn, color)
+        if '-RED-' in response:
+            response = response.replace('-RED-', Fore.RED)
+        if '-BLUE-' in response:
+            response = response.replace('-BLUE-', Fore.LIGHTBLUE_EX)
+        if '-RESET-' in response:
+            response = response.replace('-RESET-', Fore.RESET)
         if '-w' in response:
             response = response.replace('-w', Fore.RESET)
             print(response)
