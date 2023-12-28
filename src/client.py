@@ -1,3 +1,4 @@
+import hashlib
 import socket
 import getpass
 import sys
@@ -40,12 +41,25 @@ class Client:
             self.process_recv(resp)
 
             if "Do you want to add the difference to your debt" in resp:
-                ans = input("")
-                self.send(ans)
-                resp = self.recv()
-                self.process_recv(resp)
+                self.handle_add_to_debt(self)
             elif "Signup?" in resp:
                 self.handle_log_out()
+            elif "password: " in resp:
+                self.handle_get_password(resp)
+                
+
+    def add_to_debt(self):
+        ans = input("")
+        self.send(ans)
+        resp = self.recv()
+        self.process_recv(resp)
+
+    
+    def handle_get_password(self, resp: str):
+        self.process_recv(resp)
+        password = input()
+        self.send(self.hash(password))
+        self.process_recv(resp)
 
 
     def handle_log_out(self):
@@ -65,6 +79,7 @@ class Client:
         while len(pin) != 4:
             print("Please insert a pin such as: 1234")
             pin = getpass.getpass(prompt="pin: ")
+        pin = self.hash(pin)
         credentials = name + ' ' + pin
         self.send(credentials)
 
@@ -90,6 +105,7 @@ class Client:
         while len(pin) != 4:
             print("Please insert a pin such as: 1234")
             pin = getpass.getpass(prompt="pin: ")
+        pin = self.hash(pin)
         credentials = name + ' ' + pin
         print()
 
@@ -163,6 +179,10 @@ class Client:
             print("Timed out.")
             self.send("shutdown")
 
+
+    def hash(self, message: str):
+        obj = hashlib.md5(message.encode('utf-8'))
+        return obj.hexdigest()
 
 if __name__ == "__main__":
     client = Client("127.0.0.1", 8080)

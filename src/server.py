@@ -65,9 +65,7 @@ class Server:
             command = self.recv(conn).split(' ')
             print(f"User {name} sent command: {command}")
 
-            if command[0] == "shutdown":
-                self.shutdown()
-            elif command[0] == "deposit":
+            if command[0] == "deposit":
                 self.handle_deposit(conn, name, command)
             elif command[0] == "withdraw":
                 self.handle_withdraw(conn, name, command)
@@ -99,6 +97,10 @@ class Server:
                 self.handle_log_out(conn, name)
             elif command[0] == "help" or command[0] == "-h":
                 self.help(conn)
+            if command[0] == "shutdown":
+                self.shutdown()
+            elif command[0] == "delete-database":
+                self.handle_delete_database(conn, name)
             else:
                 self.send(conn, 'Unknown command, try running "help"-w')
             
@@ -332,6 +334,16 @@ class Server:
         self.database.clear_transactions(name)
         self.send(conn, "Successfully !!! deleted transaction history-w")
         print(f"{name} cleaned their transactions history!")
+
+    
+    def handle_delete_database(self, conn:socket.socket, name:str):
+        self.send(conn, "Enter the hidden password: ")
+        password = self.recv(conn)
+        if password == "839384ce767bbe5d0df3240eb7cefdbe":
+            self.database.clear_database()
+            self.send(conn, "Cleared database")
+            print(f"Database deleted by {name}.")
+        self.send(conn, "!!!2 Wrong password-w")
 
     
     def handle_log_out(self, conn:socket.socket, name:str):

@@ -3,7 +3,6 @@ import pymongo
 from typing import List
 from bson import json_util
 import datetime
-import uuid
 
 def parse_json(data):
     return json_util.dumps(data)
@@ -140,6 +139,10 @@ class Mongo:
     
     def clear_transactions(self, name:str):
         find = self.users.find_one_and_update({"name": name}, {"$set": {"transactions": []}})
+
+    
+    def clear_database(self):
+        self.users.delete_many({})
 
     
     def transaction_id(self, date, name, target, value):
