@@ -13,7 +13,7 @@ After the installation is over, you can go ahead and run *server.py* (either by 
 - Sockets -> For communicating over the internet with different computers;
 - Threading -> To create threads of *clients* that run simultaneously, as well to create mutex locks that block people from using the same function at once (when more than 2 connections running that function can result in errors. [Read more](https://stackoverflow.com/questions/34524/what-is-a-mutex));
 - Getpass -> To type hidden passwords;
-- UUID -> To generate hashes for transaction ids.
+- Hashlib -> To generate hashes for transaction ids, as well as to hash pins/passwords to send to the server.
 
 
 ## Features
