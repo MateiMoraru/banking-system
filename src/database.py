@@ -26,13 +26,42 @@ class Mongo:
             "savings": 0,
             "debt": 0,
             "credit": 0,
-            "transactions": []
+            "transactions": [],
+            "friends": [],
+            "requests": []
             }
         self.users.insert_one(data)
 
 
     def add_credit(self, name:str, value:int):
-        self.users.find_one_and_update({"name": name}, {"$inc":{"credit": value}})
+        self.users.find_one_and_update({"name": name}, {"$inc": {"credit": value}})
+
+
+    def add_friend(self, name:str, target:str):
+        print(self.get_requests(target), self.get_requests(name))
+        if name not in self.get_requests(target) and name not in self.get_friends(target):
+            print("Isnt in reqs")
+            print(f"added to {name} {target}")
+            self.users.find_one_and_update({"name": target}, {"$push": {"requests": name}})
+            return f"Friend request sent to {target}!-w"
+        print(self.get_requests(target), name)
+        if name in self.get_requests(target):
+            print("adding friend")
+            self.users.find_one_and_update({"name": name}, {"$push": {"friends": target}})
+            self.users.find_one_and_update({"name": target}, {"$push": {"friends": name}})
+            self.users.find_one_and_update({"name": target}, {"$pull": {"requests": name}})
+            #self.users.find_one_and_update({"name": name}, {"$pull": {"requests": target}})
+            return f"-GREEN-{target} is now your friend!-RESET--w"
+        return f"You already have {target} on your friend request list!-w"
+    
+
+    def remove_friend(self, name:str, target:str):
+        if self.search_name(target):
+            if target in self.get_friends(name):
+                self.users.find_one_and_update({"name": name}, {"$pull": {"friends": target}})
+                return f"Removed {target} from your friend list-w"
+            return f"{target} is not in your friend list!-w"
+        return f"{target} doesn't exist!-w"
 
     
     def get(self, name:str, field:str):
@@ -72,9 +101,16 @@ class Mongo:
         return self.get(name, "transactions")
     
 
+    def get_requests(self, name:str):
+        return self.get(name, "requests")
+    
+
+    def get_friends(self, name:str):
+        return self.get(name, "friends")
+    
+
     def search_name(self, name:str):
         find = self.users.find_one({"name": name})
-        print(find)
         return find != None
     
     

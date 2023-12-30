@@ -24,6 +24,8 @@ class Client:
         print(f"Connected to host {self.server_addr}")
 
         self.handle_log_out()
+        friend_data = self.recv()
+        self.process_recv(friend_data)
 
         try:
             self.run()
@@ -158,19 +160,10 @@ class Client:
             cash = resp_arr[-1]
             color = Fore.GREEN + cash + Fore.RESET
             response = response.replace(cash, color)
-        if '!!! ' in response or '!!!2 ' in response:
-            flag = '!!! '
-            if '!!!2 ' in response:
-                flag = '!!!2 '
-            idx = resp_arr.index(flag[:-1])
-            warn = resp_arr[idx + 1]
-            if flag == '!!!2 ':
-                warn += ' ' + resp_arr[idx + 2]
-            color = Fore.RED + warn + Fore.RESET
-            response = response.replace(flag, '')
-            response = response.replace(warn, color)
         if '-RED-' in response:
             response = response.replace('-RED-', Fore.RED)
+        if '-GREEN-' in response:
+            response = response.replace('-GREEN-', Fore.GREEN)
         if '-BLUE-' in response:
             response = response.replace('-BLUE-', Fore.LIGHTBLUE_EX)
         if '-RESET-' in response:
