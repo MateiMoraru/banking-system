@@ -73,7 +73,10 @@ class Client:
 
     
     def signup(self):
-        self.wait_mutex()
+        try:
+            self.wait_mutex()
+        except TypeError as e:
+            print(f"{Fore.RED}ERROR: failed to receieve mutex confirmation")
         name = input("Name: ")
         pin = getpass.getpass(prompt="pin: ")
         while len(pin) != 4:
@@ -94,7 +97,7 @@ class Client:
             print(f"{confirmation}, try again")
             self.signup()
         else:
-            print(confirmation)
+            self.process_recv(confirmation)
         print("Please login again")
 
         

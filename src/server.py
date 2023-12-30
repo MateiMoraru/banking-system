@@ -94,7 +94,10 @@ class Server:
                 elif command[1] == "data-pretty":
                     self.handle_get_data_pretty(conn, name)
                 elif command[1] == "transactions":
+                    print("aa")
                     self.handle_get_transactions(conn, name)
+                else:
+                    self.send(conn, '-RED-Unknown command-RESET-, try running "help"-w')
             elif command[0] == "clear" and command[1] == "transactions":
                 self.handle_clear_transactions(conn, name)
             elif command[0] == "log-out":
@@ -108,7 +111,7 @@ class Server:
             elif command[0] == "edit" and command[1] == "database":
                 self.handle_edit_database(conn, name, command)
             else:
-                self.send(conn, 'Unknown command, try running "help"-w')
+                self.send(conn, '-RED-Unknown command-RESET-, try running "help"-w')
             print()
 
 
@@ -318,7 +321,7 @@ class Server:
         data += f"Savings: {user["savings"]}$\n"
         data += f"Debt: {user["debt"]}$\n"
         data += f"Credit: {user["credit"]}\n"
-        data += f"Transactions:\n{transactions}\n"
+        data += f"Transactions:\n{transactions}\n" # TODO: Function to return transactions pretty
         msg = data + '-w'
         if conn is not None:
             self.send(conn, msg)
@@ -328,9 +331,30 @@ class Server:
     def handle_get_transactions(self, conn:socket.socket, name:str):
         transactions = ""
         raw_transactions = self.database.get_transactions(name)
+        print("aaa")
+        print(len(raw_transactions))
+        if len(raw_transactions) < 1:
+            print("NO TRANSACTIONS")
+            self.send(conn, "You currently don't have any transactions in your history-w")
         for transaction in raw_transactions:
-            transactions += database.parse_json(transaction) + "\n"
+            print(12345)
+            data = f"On {transaction["date"]}, you have "
+            print(data)
+            if "to" in transaction:
+                acc = transaction["to"]
+                data += f"sent to {acc} "
+                print(data)
+            else:
+                acc = transaction["from"]
+                data += f"recieved from {acc} "
+                print(data)
+            data += f"{transaction["value"]}$ ({transaction["hash"]})\n"
+            print(data)
+            transactions += data
+            print(data)
+
         msg = f"Account history: \n{transactions}-w\n"
+        print(msg)
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -395,7 +419,7 @@ class Server:
         commands += "-BLUE-withdraw <value> -RESET--> withdraws the value specified from you account\n"
         commands += "-BLUE-pay-debt <value> -RESET--> removes the value specified from your account's debt\n"
         commands += "-BLUE-send <name> <value> -RESET--> sends the value specified to the account specified\n"
-        commands += "-BLUE-savings <deposit|withdraw> <value> -RESET-\n"
+        commands += "-BLUE-savings <deposit|withdraw> <value> -RESET--> add/subtract from your savings account\n"
         commands += "-BLUE-loan <value> <months> -RESET--> loans you money if you have enough credit\n"
         commands += "-BLUE-get balance -RESET--> returns your balance\n"
         commands += "-BLUE-get savings -RESET--> returns your savings balance\n"
@@ -435,7 +459,7 @@ class Server:
             self.lock[0].release()
             self.signup(conn)
         else:
-            self.database.add_user(name, pin, "user")
+            self.database.add_user(name, pin)
             self.send(conn, "Account created successfully-w")
         
         self.lock[0].release()
@@ -490,7 +514,9 @@ class Server:
 
     def wait_mutex(self, conn: socket.socket):
         while self.lock[0].locked() is True:
+            time.sleep(0.1)
             self.send(conn, "Function currently locked, wait.-w")
+        time.sleep(0.1)
         self.send(conn, "Done-w")
 
     
