@@ -77,8 +77,11 @@ class Server:
                 self.handle_deposit(conn, name, command)
             elif command[0] == "withdraw":
                 self.handle_withdraw(conn, name, command)
-            elif command[0] == "pay-debt":
-                self.handle_pay_debt(conn, name, command)
+            elif command[0] == "pay":
+                if command[1] == "debt":
+                    self.handle_pay_debt(conn, name, command)
+                else:
+                    self.handle_pay_request(conn, name, command)
             elif command[0] == "send":
                 self.handle_send(conn, name, command)
             elif command[0] == "savings":
@@ -92,6 +95,8 @@ class Server:
                     self.handle_remove_friend(conn, name, command)
                 else:
                     self.send(conn, '-RED-Unknown command-RESET-, try running "help"-w')
+            elif command[0] == "request":
+                self.handle_request(conn, name, command)
             elif command[0] == "get":
                 if command[1] == "balance":
                     self.handle_get_balance(conn, name)
@@ -207,7 +212,7 @@ class Server:
     def handle_pay_debt(self, conn:socket.socket, name:str, command:List[str]):
         debt = self.database.get_debt(name)
         try:
-            value = command[1]
+            value = command[2]
             if value == '*' or value == 'all':
                 value = debt
             else:
@@ -216,7 +221,7 @@ class Server:
                 self.send(conn, 'The "value" arguments has to be positive!-w')
                 return
         except:
-            self.send(conn, '-RED- Wrong arguments-RESET-: expected "pay-debt <value>"!-w')
+            self.send(conn, '-RED- Wrong arguments-RESET-: expected "pay debt <value>"!-w')
             return
                 
         balance = self.database.get_balance(name)
@@ -235,6 +240,17 @@ class Server:
         msg = f"Your current debt is: {self.database.get_debt(name)}$-w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
+
+
+    def handle_pay_request(self, conn:socket.socket, name:str, command:List[str]):
+        try:
+            target = command[2]
+        except:
+            self.send(conn, '-RED- Wrong arguments-RESET-: expected "pay request <target>"!-w')
+            return
+        
+        resp = self.database.pay_request(name, target)
+        self.send(conn, resp + '-w')
 
     
     def handle_savings(self, conn:socket.socket, name:str, command:List[str]):
@@ -320,6 +336,28 @@ class Server:
         
         resp = self.database.remove_friend(name, target)
         self.send(conn, resp + '-w')
+
+
+    def handle_request(self, conn:socket.socket, name:str, command:List):
+        try:
+            target = command[1]
+            value = int(command[2])
+            if not self.database.search_name(target):
+                self.send(conn, f"-RED- {target}'s account doesnt exist")
+                return
+            if name == target:
+                self.send(conn, f"Can't request monney from yourself-w")
+                return
+            if value < 0:
+                self.send(conn, f'The "value" argument has to be positive!-w')
+                return
+        except:
+            self.send(conn, '-RED- Wrong arguments-RESET-: expected "request <name> <value>"!-w')
+            return
+        
+        self.database.request(name, target, value)
+        request = self.database.get_requests(name)[-1]
+        self.send(conn, f"Successfully sent request!\n{database.parse_json(request)}")
 
 
     def handle_get_balance(self, conn:socket.socket, name:str):

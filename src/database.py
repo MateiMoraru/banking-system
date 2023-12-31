@@ -4,9 +4,6 @@ from typing import List
 from bson import json_util
 import datetime
 
-def parse_json(data):
-    return json_util.dumps(data)
-
 class Mongo:
     def __init__(self, addr:str="mongodb://localhost:27017/"):
         try:
@@ -28,6 +25,7 @@ class Mongo:
             "credit": 0,
             "transactions": [],
             "friends": [],
+            "friend-requests": [],
             "requests": []
             }
         self.users.insert_one(data)
@@ -38,22 +36,20 @@ class Mongo:
 
 
     def add_friend(self, name:str, target:str):
-        reqs_1 = self.get_requests(name)
+        reqs_1 = self.get_friend_requests(name)
         friends_1 = self.get_friends(name)
-        reqs_2 = self.get_requests(target)
+        reqs_2 = self.get_friend_requests(target)
         friends_2 = self.get_friends(target)
         if (name not in reqs_2 and name not in friends_2) and (target not in reqs_1 and target not in friends_1):
-            print("Isnt in reqs")
-            print(f"added to {name} {target}")
-            self.users.find_one_and_update({"name": target}, {"$push": {"requests": name}})
+            self.users.find_one_and_update({"name": target}, {"$push": {"friend_requests": name}})
             return f"Friend request sent to {target}!-w"
         if name in reqs_2 or target in reqs_1:
             print("adding friend")
             self.users.find_one_and_update({"name": name}, {"$push": {"friends": target}})
             self.users.find_one_and_update({"name": target}, {"$push": {"friends": name}})
-            self.users.find_one_and_update({"name": target}, {"$pull": {"requests": name}})
+            self.users.find_one_and_update({"name": target}, {"$pull": {"friend_requests": name}})
             if target in reqs_1:
-                 self.users.find_one_and_update({"name": name}, {"$pull": {"requests": target}})
+                 self.users.find_one_and_update({"name": name}, {"$pull": {"friend_requests": target}})
             return f"-GREEN-{target} is now your friend!-RESET--w"
         return f"You already have {target} on your friend request list!-w"
     
@@ -65,6 +61,18 @@ class Mongo:
                 return f"Removed {target} from your friend list-w"
             return f"{target} is not in your friend list!-w"
         return f"{target} doesn't exist!-w"
+    
+
+    def request(self, name:str, target:str, value:int):
+        id = self.transaction_id(date(), name, target, value)
+        request = {
+            "from": name,
+            "to": target,
+            "value": value,
+            "date": date(),
+            "hash": id
+        }
+        self.users.find_one_and_update({"name": name}, {"$push": {"requests": request}})
 
     
     def get(self, name:str, field:str):
@@ -110,12 +118,16 @@ class Mongo:
         return self.get(name, "transactions")
     
 
-    def get_requests(self, name:str):
-        return self.get(name, "requests")
+    def get_friend_requests(self, name:str):
+        return self.get(name, "friend_requests")
     
 
     def get_friends(self, name:str):
         return self.get(name, "friends")
+    
+
+    def get_requests(self, name:str):
+        return self.get(name, "requests")
     
 
     def search_name(self, name:str):
@@ -139,6 +151,24 @@ class Mongo:
     
     def pay_debt(self, name:str, value:int):
         self.add_debt(name, -value)
+
+    def pay_request(self, name:str, target:str):
+        request = None
+        value = -1
+        for obj in self.get_requests(name):
+            if obj["to"] == name:
+                request = request
+                value = obj["value"]
+
+        if request is not None:
+            balance = self.get_balance(name)
+            if balance > value:
+                self.send_to(name, target, value)
+                self.users.find_one_and_update({"name": name}, {"$pull": {"requests": request}})
+                return "Finished transfer!"
+            return "Insufficient funds!"
+        return f"No request found from {target} to you!"
+
 
     
     def send_to(self, name:str, target:str, value:int):
@@ -197,3 +227,7 @@ class Mongo:
 
 def date():
     return datetime.datetime.today().strftime('%Y-%m-%d')
+
+
+def parse_json(data):
+    return json_util.dumps(data)
