@@ -293,7 +293,7 @@ class Server:
         try:
             target = command[2]
             if not self.database.search_name(target):
-                self.send(conn, f"-RED- {target}'s account doesnt exist")
+                self.send(conn, f"-RED- {target}'s account doesnt exist-w")
                 return
             elif name == target:
                 self.send(conn, f"Can't add you as your own friend:)-w")
@@ -301,7 +301,6 @@ class Server:
         except:
             self.send(conn, '-RED- Wrong arguments-RESET-: expected "friend add <name>"!-w')
             return
-        print("dsa")
         resp = self.database.add_friend(name, target)
         self.send(conn, resp + '-w')
 
@@ -380,45 +379,46 @@ class Server:
     def handle_get_transactions(self, conn:socket.socket, name:str):
         transactions = ""
         raw_transactions = self.database.get_transactions(name)
-        print("aaa")
-        print(len(raw_transactions))
         if len(raw_transactions) < 1:
-            print("NO TRANSACTIONS")
             self.send(conn, "You currently don't have any transactions in your history-w")
         for transaction in raw_transactions:
-            print(12345)
             data = f"On {transaction["date"]}, you have "
-            print(data)
             if "to" in transaction:
                 acc = transaction["to"]
                 data += f"sent to {acc} "
-                print(data)
             else:
                 acc = transaction["from"]
                 data += f"recieved from {acc} "
-                print(data)
             data += f"{transaction["value"]}$ ({transaction["hash"]})\n"
-            print(data)
             transactions += data
-            print(data)
 
         msg = f"Account history: \n{transactions}-w\n"
-        print(msg)
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
     
     def handle_get_friends(self, conn:socket.socket, name:str, send=True):
         all = self.database.get_friends(name)
+        if len(all) < 1:
+            if send:
+                self.send(conn, "None of your friends are currently online:(")
+                return "None of your friends are currently online:()"
+            else:
+                self.send(conn, "None of your friends are currently online:(")
+                return "None of your friends are currently online:("
         online = ""
         offline = ""
         for user in all:
-            if user in self.connections:
+            if self.logged_in(user):
                 online += f"{user}, "
             else:
                 offline += f"{user}, "
-        
-        msg = f"Friends currently -GREEN-online-RESET-: {online}\n Friends currently -RED-offline-RESET-: {offline}"
+
+        if online == "":
+            online = None
+        if offline == "":
+            offline = None
+        msg = f"Friends currently -GREEN-online-RESET-: {online}\nFriends currently -RED-offline-RESET-: {offline}"
         if send:
             self.send(conn, msg + '-w')
         else:
@@ -427,7 +427,10 @@ class Server:
     def handle_get_friend_requests(self, conn:socket.socket, name:str, send=True):
         fr = self.database.get_requests(name)
         
-        msg = f"Friends requests: {fr}"
+        if len(fr) < 1:
+            fr = None
+
+        msg = f"Friend requests: {fr}"
         if send:
             self.send(conn, msg + '-w')
         else:
@@ -452,7 +455,6 @@ class Server:
 
 
     def handle_edit_database(self, conn:socket.socket, name:str, command: List[str]):
-        print("A")
         try:
             account = command[2]
             target_field = command[4]

@@ -38,19 +38,22 @@ class Mongo:
 
 
     def add_friend(self, name:str, target:str):
-        print(self.get_requests(target), self.get_requests(name))
-        if name not in self.get_requests(target) and name not in self.get_friends(target):
+        reqs_1 = self.get_requests(name)
+        friends_1 = self.get_friends(name)
+        reqs_2 = self.get_requests(target)
+        friends_2 = self.get_friends(target)
+        if (name not in reqs_2 and name not in friends_2) and (target not in reqs_1 and target not in friends_1):
             print("Isnt in reqs")
             print(f"added to {name} {target}")
             self.users.find_one_and_update({"name": target}, {"$push": {"requests": name}})
             return f"Friend request sent to {target}!-w"
-        print(self.get_requests(target), name)
-        if name in self.get_requests(target):
+        if name in reqs_2 or target in reqs_1:
             print("adding friend")
             self.users.find_one_and_update({"name": name}, {"$push": {"friends": target}})
             self.users.find_one_and_update({"name": target}, {"$push": {"friends": name}})
             self.users.find_one_and_update({"name": target}, {"$pull": {"requests": name}})
-            #self.users.find_one_and_update({"name": name}, {"$pull": {"requests": target}})
+            if target in reqs_1:
+                 self.users.find_one_and_update({"name": name}, {"$pull": {"requests": target}})
             return f"-GREEN-{target} is now your friend!-RESET--w"
         return f"You already have {target} on your friend request list!-w"
     
@@ -65,9 +68,15 @@ class Mongo:
 
     
     def get(self, name:str, field:str):
-        find = self.users.find_one({"name": name})
-        if find:
+        try:
+            find = self.users.find_one({"name": name})
+        except:
+            print(f"Unable to find a user called {name}")
+        
+        if find != None:
+            print(find[field])
             return find[field]
+        print(None)
         return None
 
 
