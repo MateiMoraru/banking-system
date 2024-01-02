@@ -25,7 +25,7 @@ class Mongo:
             "credit": 0,
             "transactions": [],
             "friends": [],
-            "friend-requests": [],
+            "friend_requests": [],
             "requests": []
             }
         self.users.insert_one(data)
@@ -63,15 +63,18 @@ class Mongo:
         return f"{target} doesn't exist!-w"
     
 
-    def request(self, name:str, target:str, value:int):
+    def request(self, name:str, target:str, value:int, message=None):
         id = self.transaction_id(date(), name, target, value)
         request = {
             "from": name,
             "to": target,
             "value": value,
             "date": date(),
-            "hash": id
+            "hash": id,
+            "message": ''
         }
+        if message is not None:
+            request["message"] = ''.join(message)
         self.users.find_one_and_update({"name": name}, {"$push": {"requests": request}})
 
     
@@ -152,23 +155,28 @@ class Mongo:
     def pay_debt(self, name:str, value:int):
         self.add_debt(name, -value)
 
+
     def pay_request(self, name:str, target:str):
         request = None
         value = -1
+        print("abc")
         for obj in self.get_requests(name):
-            if obj["to"] == name:
-                request = request
-                value = obj["value"]
-
+            print(str(obj["to"]))
+            if str(obj["to"]) == target:
+                request = obj
+                value = int(obj["value"])
+                print("request:", request, value)
+        print("bcd")
         if request is not None:
             balance = self.get_balance(name)
+            print("efg")
             if balance > value:
+                print("hij")
                 self.send_to(name, target, value)
                 self.users.find_one_and_update({"name": name}, {"$pull": {"requests": request}})
                 return "Finished transfer!"
             return "Insufficient funds!"
-        return f"No request found from {target} to you!"
-
+        return f"No request found from {target}!"
 
     
     def send_to(self, name:str, target:str, value:int):

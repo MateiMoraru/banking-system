@@ -26,7 +26,8 @@ class Client:
         self.handle_log_out()
         friend_data = self.recv()
         self.process_recv(friend_data)
-
+        friend_request_data = self.recv()
+        self.process_recv(friend_request_data)
         try:
             self.run()
         except Exception as e:
@@ -155,11 +156,14 @@ class Client:
     
 
     def process_recv(self, response:str):
+        if '\n' in response:
+            responses = response.split('\n')
+            for resp in responses:
+                self.process_recv(resp + '-w')
+            return
         resp_arr = response.split(' ')
-        if '$' in response:
-            cash = resp_arr[-1]
-            color = Fore.GREEN + cash + Fore.RESET
-            response = response.replace(cash, color)
+        if 'Bank' in response:
+            response = response.replace('Bank', Fore.YELLOW + "Bank" + Fore.RESET)
         if '-RED-' in response:
             response = response.replace('-RED-', Fore.RED)
         if '-GREEN-' in response:

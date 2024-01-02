@@ -57,9 +57,8 @@ class Server:
             print(e)
             self.disconnect_conn(conn, addr)
         
-        friend_data = self.handle_get_friends(conn, name, False) + '\n'
-        friend_data += self.handle_get_friend_requests(conn, name, False) + '-w'
-        self.send(conn, friend_data)
+        self.handle_get_friends(conn, name, True)
+        self.handle_get_friend_requests(conn, name, True)
 
         try:
             self.loop(conn, name)
@@ -114,8 +113,10 @@ class Server:
                     self.handle_get_transactions(conn, name)
                 elif command[1] == "friends":
                     self.handle_get_friends(conn, name)
-                elif command[1] == "requests":
+                elif command[1] == "friend" and command[2] == "requests":
                     self.handle_get_friend_requests(conn, name)
+                elif command[1] == "requests":
+                    self.handle_get_requests(conn, name)
                 else:
                     self.send(conn, '-RED-Unknown command-RESET-, try running "help"-w')
             elif command[0] == "clear" and command[1] == "transactions":
@@ -146,7 +147,7 @@ class Server:
             return
         self.database.deposit(name, value)
         balance = self.database.get_balance(name)
-        msg = f"Your current balance has been increased to {balance}$-w"
+        msg = f"Your current balance has been increased to -GREEN-{balance}$-RESET--w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -171,7 +172,7 @@ class Server:
                 return
         self.database.withdraw(name, balance)
         balance = self.database.get_balance(name)
-        msg = f"Your current balance has been decreased to {balance}$-w"
+        msg = f"Your current balance has been decreased to -GREEN-{balance}$-RESET--w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -232,12 +233,12 @@ class Server:
             return
         elif value > debt:
             value = debt
-            self.send(conn, f"The amount specified is greater than you total debt, changed the amount to {debt}$-w")
+            self.send(conn, f"The amount specified is greater than you total debt, changed the amount to -GREEN-{debt}$-RESET--w")
                     
         self.database.pay_debt(name, value)
         self.database.add_credit(name, value // 100)
         self.database.add_transaction(name, "Bank", value)
-        msg = f"Your current debt is: {self.database.get_debt(name)}$-w"
+        msg = f"Your current debt is: -GREEN-{self.database.get_debt(name)}$-RESET--w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -245,8 +246,11 @@ class Server:
     def handle_pay_request(self, conn:socket.socket, name:str, command:List[str]):
         try:
             target = command[2]
+            if self.database.search_name(target) is None:
+                self.send(conn, '-RED-Account not found')
+
         except:
-            self.send(conn, '-RED- Wrong arguments-RESET-: expected "pay request <target>"!-w')
+            self.send(conn, '-RED-Wrong arguments-RESET-: expected "pay request <target>"!-w')
             return
         
         resp = self.database.pay_request(name, target)
@@ -269,7 +273,7 @@ class Server:
                 self.database.withdraw(name, value)
                 self.database.add_savings(name, value)
                 savings = self.database.get_savings(name)
-                self.send(conn, f"Your savings account balance has been increased to: {savings}$-w")
+                self.send(conn, f"Your savings account balance has been increased to: -GREEN-{savings}$-RESET--w")
             else:
                 self.send(conn, "-RED-2 Insufficient funds!-w")
         elif operation == "withdraw":
@@ -277,7 +281,7 @@ class Server:
                 self.database.deposit(name, value)
                 self.database.add_savings(name, -value)
                 savings = self.database.get_savings(name)
-                self.send(conn, f"Your savings account balance has been decreased to: {savings}$-w")
+                self.send(conn, f"Your savings account balance has been decreased to: -GREEN-{savings}$-RESET--w")
             else:
                 self.send(conn, "-RED-2 Insufficient funds in savings account!-w")
         else:
@@ -302,7 +306,7 @@ class Server:
             self.database.deposit(name, value)
             self.send(conn, f"Loan accepted. You have {months} months to pay it back.-w")
         else:
-            self.send(conn, f"Loan not accepted due to -RED-2 insuficient credit! Required credit: {required_credit}-w")
+            self.send(conn, f"Loan not accepted due to -RED-insuficient credit-RESET-! Required credit: {required_credit}-w")
 
 
     def handle_friend_request(self, conn:socket.socket, name:str, command:List):
@@ -339,9 +343,12 @@ class Server:
 
 
     def handle_request(self, conn:socket.socket, name:str, command:List):
+        message = None
         try:
             target = command[1]
             value = int(command[2])
+            if len(command) > 3:
+                message = command[3:len(command)]
             if not self.database.search_name(target):
                 self.send(conn, f"-RED- {target}'s account doesnt exist")
                 return
@@ -352,24 +359,25 @@ class Server:
                 self.send(conn, f'The "value" argument has to be positive!-w')
                 return
         except:
-            self.send(conn, '-RED- Wrong arguments-RESET-: expected "request <name> <value>"!-w')
+            self.send(conn, '-RED- Wrong arguments-RESET-: expected "request <name> <value> <message=-BLUE-None-RESET->"!-w')
             return
         
-        self.database.request(name, target, value)
+        self.database.request(name, target, value, message)
         request = self.database.get_requests(name)[-1]
-        self.send(conn, f"Successfully sent request!\n{database.parse_json(request)}")
+        print(request)
+        self.send(conn, f"Successfully sent request!\n{database.parse_json(request)}-w")
 
 
     def handle_get_balance(self, conn:socket.socket, name:str):
         balance = self.database.get_balance(name)
-        msg = f"Your current balance is: {balance}$-w"
+        msg = f"Your current balance is: -GREEN-{balance}$-RESET--w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
     
     def handle_get_savings(self, conn:socket.socket, name:str):
         savings = self.database.get_savings(name)
-        msg = f"Your current savings account balance is: {savings}$-w"
+        msg = f"Your current savings account balance is: -GREEN-{savings}$-RESET--w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -383,7 +391,7 @@ class Server:
 
     def handle_get_debt(self, conn:socket.socket, name:str):
         debt = self.database.get_debt(name)
-        msg = f"Your current debt is: {debt}$-w"
+        msg = f"Your current debt is: -GREEN-{debt}$-RESET--w"
         self.send(conn, msg)
         print(f"{name}: {msg.replace('-w', '')}")
 
@@ -403,9 +411,9 @@ class Server:
         data = ""
         user = self.database.get_user_raw(name)
         data += f"Name: {user["name"]}\n"
-        data += f"Balance: {user["balance"]}$\n"
-        data += f"Savings: {user["savings"]}$\n"
-        data += f"Debt: {user["debt"]}$\n"
+        data += f"Balance: -GREEN-{user["balance"]}$-RESET-\n"
+        data += f"Savings: -GREEN-{user["savings"]}$-RESET-\n"
+        data += f"Debt: -GREEN-{user["debt"]}$-RESET-\n"
         data += f"Credit: {user["credit"]}\n"
         data += f"Transactions:\n{transactions}\n" # TODO: Function to return transactions pretty
         msg = data + '-w'
@@ -427,7 +435,7 @@ class Server:
             else:
                 acc = transaction["from"]
                 data += f"recieved from {acc} "
-            data += f"{transaction["value"]}$ ({transaction["hash"]})\n"
+            data += f"-GREEN-{transaction["value"]}$-RESET- ({transaction["hash"]})\n"
             transactions += data
 
         msg = f"Account history: \n{transactions}-w\n"
@@ -439,11 +447,11 @@ class Server:
         all = self.database.get_friends(name)
         if len(all) < 1:
             if send:
-                self.send(conn, "None of your friends are currently online:(")
-                return "None of your friends are currently online:()"
+                self.send(conn, "None of your friends are currently online:(-w")
+                return "None of your friends are currently online:(-w"
             else:
-                self.send(conn, "None of your friends are currently online:(")
-                return "None of your friends are currently online:("
+                self.send(conn, "None of your friends are currently online:(-w")
+                return "None of your friends are currently online:(-w"
         online = ""
         offline = ""
         for user in all:
@@ -463,12 +471,23 @@ class Server:
             return msg
 
     def handle_get_friend_requests(self, conn:socket.socket, name:str, send=True):
-        fr = self.database.get_requests(name)
+        fr = self.database.get_friend_requests(name)
         
         if len(fr) < 1:
             fr = None
 
         msg = f"Friend requests: {fr}"
+        if send:
+            self.send(conn, msg + '-w')
+        else:
+            return msg
+        
+
+    def handle_get_requests(self, conn:socket.socket, name:str, send=True):
+        reqs = self.database.get_requests(name)
+        if len(reqs) < 1:
+            reqs = None
+        msg = f"Fund Requests: {reqs}"
         if send:
             self.send(conn, msg + '-w')
         else:
@@ -532,10 +551,13 @@ class Server:
         commands = ""
         commands += "-BLUE-deposit <value> -RESET--> deposits the value specified in your account\n"
         commands += "-BLUE-withdraw <value> -RESET--> withdraws the value specified from you account\n"
-        commands += "-BLUE-pay-debt <value> -RESET--> removes the value specified from your account's debt\n"
+        commands += "-BLUE-pay debt <value> -RESET--> removes the value specified from your account's debt\n"
+        commands += "-BLUE-pay request <name> -RESET--> sends the value requested to the specified account\n"
         commands += "-BLUE-send <name> <value> -RESET--> sends the value specified to the account specified\n"
         commands += "-BLUE-savings <deposit|withdraw> <value> -RESET--> add/subtract from your savings account\n"
         commands += "-BLUE-loan <value> <months> -RESET--> loans you money if you have enough credit\n"
+        commands += "-BLUE-friend <add/remove> <name> -RESET--> sends a friend request to someone\n"
+        commands += "-BLUE-request <name> <value> <message=None>-RESET--> sends a fund request to someone\n"
         commands += "-BLUE-get balance -RESET--> returns your balance\n"
         commands += "-BLUE-get savings -RESET--> returns your savings balance\n"
         commands += "-BLUE-get credit -RESET--> returns your credit score\n"
@@ -543,6 +565,9 @@ class Server:
         commands += "-BLUE-get data -RESET--> returns your account's data\n"
         commands += "-BLUE-get data-pretty -RESET--> returns your data in a more readable manner\n"
         commands += "-BLUE-get transactions -RESET--> returns a list of all of your transactions\n"
+        commands += "-BLUE-get friends -RESET--> returns a list of your online/offline friends\n"
+        commands += "-BLUE-get friend requests -RESET--> returns a list off all of the people that want to be your friend"
+        commands += "-BLUE-get requests -RESET--> returns a list of all your fund requests\n"
         commands += "-BLUE-clear transactions -RESET--> deletes transaction history\n"
         commands += "-BLUE-log-out -RESET--> connect to a different account\n"
         commands += "-BLUE-shutdown -RESET--> shuts down server\n-w"
