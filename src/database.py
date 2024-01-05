@@ -153,25 +153,19 @@ class Mongo:
 
     
     def pay_debt(self, name:str, value:int):
-        self.add_debt(name, -value)
+        self.users.find_one_and_update({"name": name}, {"$inc":{"debt": -value}})
 
 
     def pay_request(self, name:str, target:str):
         request = None
         value = -1
-        print("abc")
         for obj in self.get_requests(name):
-            print(str(obj["to"]))
             if str(obj["to"]) == target:
                 request = obj
                 value = int(obj["value"])
-                print("request:", request, value)
-        print("bcd")
         if request is not None:
             balance = self.get_balance(name)
-            print("efg")
             if balance > value:
-                print("hij")
                 self.send_to(name, target, value)
                 self.users.find_one_and_update({"name": name}, {"$pull": {"requests": request}})
                 return "Finished transfer!"
@@ -195,7 +189,6 @@ class Mongo:
 
     def add_transaction(self, name:str, target:str, value:int):
         id = self.transaction_id(date(), name, target, value)
-        print(id)
         data_sender = {
             "date": date(),
             "to": target,

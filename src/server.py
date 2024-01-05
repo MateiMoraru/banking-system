@@ -15,7 +15,7 @@ class Server:
         self.database = database.Mongo()
         self.listening = True
         self.connections = []
-        self.lock = [threading.Lock(), -1]# Login mutex lock
+        self.lock = [threading.Lock(), -1] #Login mutex lock
         self.user_data = []
 
 
@@ -204,8 +204,6 @@ class Server:
                 value = current_balance
             self.database.send_to(name, account, value)
             self.send(conn, "Transfer finished-w")
-            transaction = self.database.get_transactions(name)[-1]
-            print(transaction)
         else:
             self.send(conn, f"User -RED- {account} doesn't exist!-w")
 
@@ -224,7 +222,8 @@ class Server:
         except:
             self.send(conn, '-RED- Wrong arguments-RESET-: expected "pay debt <value>"!-w')
             return
-                
+        
+        print(debt)
         balance = self.database.get_balance(name)
         if debt <= 0:
             self.send(conn, "You don't have any debt-w")
@@ -551,7 +550,7 @@ class Server:
         commands = ""
         commands += "-BLUE-deposit <value> -RESET--> deposits the value specified in your account\n"
         commands += "-BLUE-withdraw <value> -RESET--> withdraws the value specified from you account\n"
-        commands += "-BLUE-pay debt <value> -RESET--> removes the value specified from your account's debt\n"
+        commands += "-BLUE-pay debt <value|*> -RESET--> removes the value specified from your account's debt\n"
         commands += "-BLUE-pay request <name> -RESET--> sends the value requested to the specified account\n"
         commands += "-BLUE-send <name> <value> -RESET--> sends the value specified to the account specified\n"
         commands += "-BLUE-savings <deposit|withdraw> <value> -RESET--> add/subtract from your savings account\n"
