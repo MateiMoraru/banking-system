@@ -1,29 +1,39 @@
 # Banking System
+
 ![mongoDB_icon](assets/mongoDB2.png)
+
 ### [MongoDB documentation page](https://www.mongodb.com/docs/)
-## Description
-This project is an attempt at recreating banks' monetization and transaction systems. Using *mongoDB* in *python*, the user can easily connect to the server and start making some transactions between accounts and more.
 
-## How to use
-First of all, make sure you have all the required libraries installed by running `pip install -r requirements.txt` in your command line.
-After the installation is over, you can go ahead and run *server.py* (either by running *run-server.bat* or typing `python server.py` in your command line). Do the same thing in order to run *client.py*. Now, you can type *help* in your *client* side to start using commands.
+## Project Overview
 
-## Used Dependencies
-- PyMongo(v4.6.0) -> Used for creating an easy accessed class that maintains the local MongoDB database;
-- Socket -> For communicating over the internet with different computers;
-- Threading -> To create threads of *clients* that run simultaneously, as well to create mutex locks that block people from using the same function at once (when more than 2 connections running that function can result in errors. [Read more](https://stackoverflow.com/questions/34524/what-is-a-mutex));
-- Getpass -> To type hidden passwords;
-- Hashlib -> To generate hashes for transaction ids, as well as to hash pins/passwords to send to the server;
-- Colorama(v0.4.6) -> To add color for the *client* UI;
-- Bson(v0.5.10) -> To make jsons into strings.
+This project aims to replicate banking monetization and transaction systems. Leveraging *mongoDB* with *Python*, users can effortlessly connect to the server and initiate transactions between accounts and more.
 
+## How to Use
 
-## Features
-1. Due to `MongoDB's` speed and scalability, the program offers fast responses;
-2. Although the program doesn't have a GUI, it is still easy to use because of the `help` command that gives you all the possible commands you can send;
-3. Threads play a key role in making the server able to hold multiple users at once. `Threading` creates a thread for every connection and also handles mutexes;
+1. Ensure all required libraries are installed by executing `pip install -r requirements.txt` in your command line.
+2. Run the server using either *run-server.bat* or by typing `python server.py` in your command line.
+3. Repeat the process to run *client.py*. Type *help* on the *client* side to explore available commands.
+
+## Dependencies
+
+- **PyMongo(v4.6.0):** Facilitates an easily accessible class maintaining the local MongoDB database.
+- **Socket:** Enables communication over the internet with different computers.
+- **Threading:** Creates threads for simultaneous *clients* and mutex locks to prevent concurrent function usage (more than two connections running the same function may result in errors. [Learn more](https://stackoverflow.com/questions/34524/what-is-a-mutex)).
+- **Getpass:** Allows input of hidden passwords.
+- **Hashlib:** Generates hashes for transaction IDs and hashes pins/passwords sent to the server.
+- **Colorama(v0.4.6):** Adds color to the *client* UI.
+- **Bson(v0.5.10):** Converts JSONs into strings.
+
+## Key Features
+
+1. **MongoDB Speed and Scalability:** The program ensures fast responses owing to MongoDB's efficiency.
+2. **User-Friendly Command Line Interface:** Although lacking a GUI, the program is easy to use, aided by the *help* command listing all possible commands.
+3. **Thread Management:** Threads are pivotal for the server to handle multiple users concurrently. *Threading* creates a thread for each connection and manages mutexes.
+
 ## Examples
+
 ![example 1](assets/Screenshot_1.png)
 
-## Help
-Feel free to ask any questions, either on *github* or on my [moraru.matei24@gmail.com](mailto:moraru.matei24@gmail.com).
+## Support and Contact
+
+Feel free to reach out with any questions or concerns on *GitHub* or via email at [moraru.matei24@gmail.com](mailto:moraru.matei24@gmail.com).
